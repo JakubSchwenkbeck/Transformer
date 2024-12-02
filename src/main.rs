@@ -1,3 +1,6 @@
+use Transformer::transformer;
+
 fn main() {
-    println!("Hello, world!");
+    println!("Welcome to the Transformer!");
+    transformer::train_model();
 }
