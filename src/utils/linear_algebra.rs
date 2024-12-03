@@ -12,8 +12,12 @@ use ndarray::linalg::general_mat_mul;
 /// # Returns
 /// An `Array2<f32>` representing the result of the matrix multiplication.
 
-pub fn matmul(a: &Array2<f32>, b: &Array2<f32>) -> Array2<f32> {
-    let mut result = Array2::<f32>::zeros((a.nrows(), b.ncols())); // get a's rows and b's cols, panic if mismatch!
-    general_mat_mul(1.0, a, b, 0.0, &mut result); // compute res <= 1* AB + 0 * res
-    result
+pub fn matmul(a: &Array2<f32>, b: &Array2<f32>) -> Result<Array2<f32>, &'static str> {
+    if a.ncols() != b.nrows() {
+        return Err("Matrix dimensions are incompatible for multiplication.");
+    }
+    let mut result = Array2::<f32>::zeros((a.nrows(), b.ncols()));
+    general_mat_mul(1.0, a, b, 0.0, &mut result);
+    Ok(result)
 }
+
