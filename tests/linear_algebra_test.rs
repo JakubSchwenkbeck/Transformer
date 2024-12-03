@@ -1,5 +1,6 @@
 use Transformer::utils::linear_algebra::matmul;
 use ndarray::array; // Assuming you're using ndarray for matrices
+use ndarray::Array2;
 
 #[test]
 fn test_matmul_valid_input() {
@@ -23,13 +24,16 @@ fn test_matmul_valid_input() {
     // Act: Perform the multiplication
     let result = matmul(&a, &b); // Assuming matmul returns Result
 
-    // Assert: Check the result matches the expectation
-    assert_eq!(result, expected);
+    // Assert: Check the result is Ok and matches the expected result
+    match result {
+        Ok(res) => assert_eq!(res, expected),
+        Err(e) => panic!("Matrix multiplication failed: {}", e),
+    }
 }
 
 #[test]
-#[should_panic] // If you expect the function to panic on invalid input
 fn test_matmul_invalid_input() {
+    // Arrange: Define input matrices with mismatched dimensions
     let a = array![
             [1.0, 2.0],
             [3.0, 4.0]
@@ -38,7 +42,9 @@ fn test_matmul_invalid_input() {
             [5.0, 6.0]
         ]; // 1x2 matrix (mismatched dimensions)
 
-    matmul(&a, &b); // Should panic or return an error
+    // Act: Perform the multiplication, expecting an error
+    let result = matmul(&a, &b);
+
+    // Assert: Ensure the result is an error due to incompatible dimensions
+    assert_eq!(result, Err("Matrix dimensions are incompatible for multiplication."));
 }
-
-
