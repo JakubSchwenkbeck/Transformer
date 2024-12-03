@@ -7,5 +7,5 @@ pub mod transformer {
 
 pub mod utils {
     pub mod linear_algebra;
-
+    pub mod activation;
 }
