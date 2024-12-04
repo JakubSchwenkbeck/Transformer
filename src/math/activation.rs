@@ -9,6 +9,9 @@ pub fn relu(a: &Array2<f32>) -> Array2<f32> {
     // Relu :   B(i,j) = max(0,A(i,j))
 }
 
+
+
+
 use std::f32::consts::PI;
 // GELU (Gaussian Error Linear Unit)
 //Formula:
@@ -22,4 +25,9 @@ pub fn gelu(a:  &Array2<f32>) -> Array2<f32> {
 
     a.mapv(|x| gelu_calc(x) )
 }
+
+
+
+
+
 

@@ -1,6 +1,6 @@
-use Transformer::utils::linear_algebra::matmul;
+use Transformer::math::linear_algebra::matmul;
 use ndarray::array; // Assuming you're using ndarray for matrices
-use ndarray::Array2;
+
 
 #[test]
 fn test_matmul_valid_input() {
