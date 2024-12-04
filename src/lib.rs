@@ -6,8 +6,7 @@ pub mod transformer {
 }
 
 pub mod math {
+    pub mod activation;
     pub mod linear_algebra;
     pub mod softmax;
-    pub mod activation;
-
 }

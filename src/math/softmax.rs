@@ -1,9 +1,6 @@
 #![allow(unused_imports)] // {array} import is not recognized as it is used in #[test]
 use ndarray::{array, Array, Array1, Array2, ArrayView1, Axis};
 
-
-
-
 pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     let max = vec.fold(f32::NEG_INFINITY, |a, &b| a.max(b)); // Stabilize by subtracting max
     let exp_vec = vec.mapv(|x| (x - max).exp());
@@ -11,14 +8,9 @@ pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     exp_vec / sum
 }
 
-
 pub fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
-    convert_to_array2(mat.map_axis(Axis(1), |row| softmax_vector(row)))
+    convert_to_array2(mat.map_axis(Axis(1), softmax_vector))
 }
-
-
-
-
 
 fn convert_to_array2(array1d: Array<Array1<f32>, ndarray::Ix1>) -> Array2<f32> {
     // Check if the input array is non-empty
@@ -30,7 +22,11 @@ fn convert_to_array2(array1d: Array<Array1<f32>, ndarray::Ix1>) -> Array2<f32> {
     let mut data = Vec::new();
 
     for row in array1d.iter() {
-        assert_eq!(row.len(), cols, "All rows must have the same number of columns.");
+        assert_eq!(
+            row.len(),
+            cols,
+            "All rows must have the same number of columns."
+        );
         data.extend_from_slice(row.as_slice().unwrap()); // Flatten each row and push into Vec
     }
 
@@ -38,9 +34,7 @@ fn convert_to_array2(array1d: Array<Array1<f32>, ndarray::Ix1>) -> Array2<f32> {
 }
 
 #[test]
-pub fn convert_to_array2_test(){
-
-
+pub fn convert_to_array2_test() {
     let data = Array::from(vec![
         Array1::from(vec![1.0, 2.0, 3.0]),
         Array1::from(vec![4.0, 5.0, 6.0]),
@@ -50,10 +44,9 @@ pub fn convert_to_array2_test(){
     // Convert to Array2<f32>
     let matrix = convert_to_array2(data);
 
-    let d2array :Array2<f32> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
+    let d2array: Array2<f32> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
 
     assert_eq!(matrix.nrows(), 3);
     assert_eq!(matrix.ncols(), 3);
-    assert_eq!(matrix,d2array);
-
+    assert_eq!(matrix, d2array);
 }

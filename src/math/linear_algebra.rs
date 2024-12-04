@@ -1,7 +1,5 @@
-
-use ndarray::{Array1, Array2};
 use ndarray::linalg::general_mat_mul;
-
+use ndarray::{Array1, Array2};
 
 /// Performs matrix multiplication between two 2D arrays.
 ///
@@ -11,7 +9,6 @@ use ndarray::linalg::general_mat_mul;
 ///
 /// # Returns
 /// An `Array2<f32>` representing the result of the matrix multiplication.
-
 pub fn matmul(a: &Array2<f32>, b: &Array2<f32>) -> Result<Array2<f32>, &'static str> {
     if a.ncols() != b.nrows() {
         return Err("Matrix dimensions are incompatible for multiplication.");
@@ -21,9 +18,6 @@ pub fn matmul(a: &Array2<f32>, b: &Array2<f32>) -> Result<Array2<f32>, &'static 
     Ok(result)
 }
 
-
-
 pub fn dotproduct(a: &Array1<f32>, b: &Array1<f32>) -> f32 {
     a.dot(b)
 }
-
