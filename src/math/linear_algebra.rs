@@ -1,5 +1,5 @@
 
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 use ndarray::linalg::general_mat_mul;
 
 
@@ -19,5 +19,11 @@ pub fn matmul(a: &Array2<f32>, b: &Array2<f32>) -> Result<Array2<f32>, &'static 
     let mut result = Array2::<f32>::zeros((a.nrows(), b.ncols()));
     general_mat_mul(1.0, a, b, 0.0, &mut result);
     Ok(result)
+}
+
+
+
+pub fn dotproduct(a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+    a.dot(b)
 }
 

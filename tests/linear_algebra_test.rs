@@ -1,5 +1,5 @@
-use Transformer::math::linear_algebra::matmul;
-use ndarray::array; // Assuming you're using ndarray for matrices
+use Transformer::math::linear_algebra::{dotproduct, matmul};
+use ndarray::{array, Array1}; // Assuming you're using ndarray for matrices
 
 
 #[test]
@@ -48,3 +48,45 @@ fn test_matmul_invalid_input() {
     // Assert: Ensure the result is an error due to incompatible dimensions
     assert_eq!(result, Err("Matrix dimensions are incompatible for multiplication."));
 }
+
+#[test]
+fn test_dotproduct(){
+    let a : Array1<f32> =  array![ 1.0, 2.0, 3.0 ];
+    let b : Array1<f32> =  array![ 4.0, 5.0, 5.0 ];
+
+    let expected = (4 + 10 + 15) as f32;
+    let result = dotproduct(&a, &b);
+
+    assert_eq!(result, expected);
+}
+#[test]
+fn test_floats_dotproduct(){
+    let a : Array1<f32> =  array![ 2.9, 7.68, 2.333 ];
+    let b : Array1<f32> =  array![ 0.74, 1.2, 5.111 ];
+
+    let expected = (2.9*0.74 + 7.68*1.2 + 2.333*5.111) as f32;
+    let result = dotproduct(&a, &b);
+
+    assert_eq!(result, expected);
+}#[test]
+fn test_empty_dotproduct(){
+    let a : Array1<f32> =  array![  ];
+    let b : Array1<f32> =  array![ ];
+
+    let expected = 0.0;
+    let result = dotproduct(&a, &b);
+
+    assert_eq!(result, expected);
+}
+
+/*
+#[test]
+fn test_mismatch_dotproduct(){
+    let a : Array1<f32> =  array![ 2.9, 7.68, 2.333 ,1.0];
+    let b : Array1<f32> =  array![ 0.74, 1.2, 5.111 ];
+
+    let expected = (2.9*0.74 + 7.68*1.2 + 2.333*5.111 ) as f32;
+    let result = dotproduct(&a, &b);
+
+    assert_eq!(result, expected);
+}*/
