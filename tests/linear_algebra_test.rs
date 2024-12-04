@@ -79,14 +79,12 @@ fn test_empty_dotproduct(){
     assert_eq!(result, expected);
 }
 
-/*
 #[test]
-fn test_mismatch_dotproduct(){
-    let a : Array1<f32> =  array![ 2.9, 7.68, 2.333 ,1.0];
-    let b : Array1<f32> =  array![ 0.74, 1.2, 5.111 ];
+#[should_panic]
+fn test_mismatch_dotproduct() {
+    let a: Array1<f32> = array![2.9, 7.68, 2.333, 1.0];
+    let b: Array1<f32> = array![0.74, 1.2, 5.111];
 
-    let expected = (2.9*0.74 + 7.68*1.2 + 2.333*5.111 ) as f32;
-    let result = dotproduct(&a, &b);
-
-    assert_eq!(result, expected);
-}*/
+    // This call is expected to panic due to a mismatch in dimensions.
+    let _result = dotproduct(&a, &b);
+}
