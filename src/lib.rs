@@ -5,7 +5,9 @@ pub mod transformer {
     }
 }
 
-pub mod utils {
+pub mod math {
     pub mod linear_algebra;
+    pub mod softmax;
     pub mod activation;
+
 }
