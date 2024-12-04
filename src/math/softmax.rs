@@ -1,9 +1,10 @@
+#![allow(unused_imports)] // {array} import is not recognized as it is used in #[test]
 use ndarray::{array, Array, Array1, Array2, ArrayView1, Axis};
 
 
 
 
-fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
+pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     let max = vec.fold(f32::NEG_INFINITY, |a, &b| a.max(b)); // Stabilize by subtracting max
     let exp_vec = vec.mapv(|x| (x - max).exp());
     let sum: f32 = exp_vec.sum();
@@ -11,7 +12,7 @@ fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
 }
 
 
-fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
+pub fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
     convert_to_array2(mat.map_axis(Axis(1), |row| softmax_vector(row)))
 }
 
