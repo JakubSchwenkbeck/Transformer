@@ -1,5 +1,5 @@
 use ndarray::{array, Array1};
-use Transformer::math::linear_algebra::{dotproduct, matmul}; // Assuming you're using ndarray for matrices
+use Transformer::math::linear_algebra::{dotproduct, matmul, tensor_product}; // Assuming you're using ndarray for matrices
 
 #[test]
 fn test_matmul_valid_input() {
@@ -75,4 +75,71 @@ fn test_mismatch_dotproduct() {
 
     // This call is expected to panic due to a mismatch in dimensions.
     let _result = dotproduct(&a, &b);
+}
+
+#[test]
+fn test_tensor_product_single_batch() {
+    let a = array![
+        [[1.0, 2.0], [3.0, 4.0]] // Shape: (1, 2, 2)
+    ];
+    let b = array![
+        [[5.0, 6.0], [7.0, 8.0]] // Shape: (1, 2, 2)
+    ];
+    let expected = array![
+        [[19.0, 22.0], [43.0, 50.0]] // Shape: (1, 2, 2), result of 2x2 matrix multiplication
+    ];
+
+    let result = tensor_product(&a, &b);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_tensor_product_multi_batch() {
+    let a = array![
+        [[1.0, 0.0], [0.0, 1.0]], // Batch 1: identity matrix
+        [[2.0, 3.0], [4.0, 5.0]]  // Batch 2: General 2x2 matrix
+    ]; // Shape: (2, 2, 2)
+
+    let b = array![
+        [[1.0, 2.0], [3.0, 4.0]], // Batch 1: Random 2x2 matrix
+        [[0.0, 1.0], [1.0, 0.0]]  // Batch 2: Another 2x2 matrix
+    ]; // Shape: (2, 2, 2)
+
+    let expected = array![
+        [[1.0, 2.0], [3.0, 4.0]], // Batch 1: Multiplication with Identity gives same matrix
+        [[3.0, 2.0], [5.0, 4.0]]  // Batch 2: Custom result
+    ];
+
+    let result = tensor_product(&a, &b);
+    assert_eq!(result, expected);
+}
+#[test]
+fn test_tensor_product_larger_matrices() {
+    let a = array![
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], // Shape: (1, 2, 3)
+    ];
+
+    let b = array![
+        [[7.0, 8.0], [9.0, 10.0], [11.0, 12.0]] // Shape: (1, 3, 2)
+    ];
+
+    let expected = array![
+        [[58.0, 64.0], [139.0, 154.0]] // Shape: (1, 2, 2)
+    ];
+
+    let result = tensor_product(&a, &b);
+    assert_eq!(result, expected);
+}
+
+#[test]
+#[should_panic]
+fn test_mismatch_tensor_product() {
+    let a = array![
+        [[1.0, 2.0], [3.0, 4.0]] // Shape: (1, 2, 2)
+    ];
+    let b = array![
+        [[5.0, 6.0], [7.0, 8.0],[2.0,1.0]] // Shape: (1, 2, 2)
+    ];
+    // This call is expected to panic due to a mismatch in dimensions.
+    let _result = tensor_product(&a, &b);
 }
