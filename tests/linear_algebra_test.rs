@@ -147,7 +147,7 @@ fn test_tensor_product_performance() {
     let duration = start.elapsed();
 
     // Ensure the operation completes within reasonable time limits
-    assert!(duration.as_secs() < 2, "Tensor product took too long");
+    assert!(duration.as_secs() < 1, "Tensor product took too long");
 }
 #[test]
 fn test_tensor_product_shapes() {

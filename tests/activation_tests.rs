@@ -1,5 +1,5 @@
 use ndarray::array;
-use Transformer::math::activation::{gelu, relu};
+use Transformer::activation::activation_functions::{gelu, relu};
 
 #[test]
 pub fn test_relu() {

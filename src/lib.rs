@@ -6,11 +6,19 @@ pub mod transformer {
 }
 
 pub mod math {
-    pub mod activation;
-    pub mod linear_algebra;
-    pub mod softmax;
 
-    pub mod normalization;
+    pub mod linear_algebra;
 
     pub mod positional_encoding;
+}
+
+pub mod activation {
+    pub mod activation_functions;
+}
+pub mod attention {
+    pub mod softmax;
+}
+
+pub mod layers {
+    pub mod normalization;
 }

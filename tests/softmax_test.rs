@@ -1,7 +1,7 @@
 #![allow(clippy::excessive_precision)]
 
 use ndarray::{array, Array, Array1, Array2, Ix1};
-use Transformer::math::softmax::{softmax_matrix, softmax_vector};
+use Transformer::attention::softmax::{softmax_matrix, softmax_vector};
 
 #[test]
 pub fn test_softmax_vector() {
