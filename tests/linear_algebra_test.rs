@@ -1,4 +1,5 @@
-use ndarray::{array, Array1};
+use ndarray::{array, Array1, Array3};
+use std::time::Instant;
 use Transformer::math::linear_algebra::{dotproduct, matmul, tensor_product}; // Assuming you're using ndarray for matrices
 
 #[test]
@@ -129,6 +130,40 @@ fn test_tensor_product_larger_matrices() {
 
     let result = tensor_product(&a, &b);
     assert_eq!(result, expected);
+}
+
+#[test]
+fn test_tensor_product_performance() {
+    let batch_size = 32;
+    let seq_length = 128;
+    let embedding_size = 512;
+
+    let a = Array3::<f32>::ones((batch_size, seq_length, embedding_size));
+    let b = Array3::<f32>::ones((batch_size, embedding_size, seq_length));
+
+    // Timing the tensor product operation for larger tensors
+    let start = Instant::now();
+    let _ = tensor_product(&a, &b);
+    let duration = start.elapsed();
+
+    // Ensure the operation completes within reasonable time limits
+    assert!(duration.as_secs() < 2, "Tensor product took too long");
+}
+#[test]
+fn test_tensor_product_shapes() {
+    // Given tensors with matching dimensions
+    let a = array![
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],  // Shape: (1, 2, 3)
+        ];
+
+    let b = array![
+            [[7.0, 8.0], [9.0, 10.0], [11.0, 12.0]]  // Shape: (1, 3, 2)
+        ];
+
+    let result = tensor_product(&a, &b);
+
+    // Assert shape consistency: result should be (1, 2, 2)
+    assert_eq!(result.shape(), [1, 2, 2]);
 }
 
 #[test]
