@@ -50,3 +50,10 @@ pub fn convert_to_array2_test() {
     assert_eq!(matrix.ncols(), 3);
     assert_eq!(matrix, d2array);
 }
+
+#[test]
+#[should_panic]
+pub fn convert_to_array2_test_panic() {
+    let data = Array::from(vec![]);
+    let _ = convert_to_array2(data);
+}

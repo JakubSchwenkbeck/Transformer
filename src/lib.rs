@@ -16,6 +16,8 @@ pub mod activation {
     pub mod activation_functions;
 }
 pub mod attention {
+    pub mod multihead_attention;
+    pub mod scaled_dot_attention;
     pub mod softmax;
 }
 
