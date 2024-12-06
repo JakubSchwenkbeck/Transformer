@@ -1,5 +1,6 @@
+#![allow(unused_variables)]
 use crate::math::linear_algebra::matmul;
-use ndarray::{array, s, Array2, Array3, Axis, ShapeError};
+use ndarray::{array, Array3, Axis, ShapeError};
 
 pub fn scaled_dot_product_attention(
     q: Array3<f32>,             // Shape: (B, L_Q, d_k)
@@ -9,13 +10,14 @@ pub fn scaled_dot_product_attention(
 ) -> Array3<f32> {
     let batch_size = q.shape()[0];
     assert_eq!(q.shape()[0], k.shape()[0], "Batch Size mismatch");
-    let d_k = q.shape()[2];
+    let d_k: f32 = q.shape()[2] as f32;
     let d_v = v.shape()[2];
     let L_Q = q.shape()[1]; // (L_Q and L_K might be equal all along?)
     let L_K = k.shape()[1];
-    let scores = query_key_product(q, k).unwrap();
+    let mut scores = query_key_product(q, k).unwrap();
+    scores /= d_k.sqrt();
 
-    v
+    scores
 }
 pub fn query_key_product(
     q: Array3<f32>, // Shape: (B, L_Q, d_k)
@@ -28,9 +30,6 @@ pub fn query_key_product(
         "Query and Key must have the same depth for dot product"
     );
 
-    // Dimension of keys (d_k) for scaling
-    let d_k = q.shape()[2] as f32;
-
     // Perform the batch matrix multiplication q * k^T
     let mut scores = Array3::<f32>::zeros((q.shape()[0], q.shape()[1], k.shape()[1])); // (B, L_Q, L_K)
 
@@ -41,11 +40,11 @@ pub fn query_key_product(
         // Matrix multiplication
         scores
             .index_axis_mut(Axis(0), b)
-            .assign(&(q_batch.dot(&k_batch.t())));
+            //.assign(&(q_batch.dot(&k_batch.t()))); // using my own implementation:
+            .assign(&(matmul(&q_batch.to_owned(), &k_batch.t().to_owned()).unwrap()));
     }
 
     // Scale the scores by sqrt(d_k)
-    // scores /= d_k.sqrt();
 
     Ok(scores)
 }
@@ -93,5 +92,25 @@ pub fn test_attention_matrices() {
         ]
     ];
 
-    scaled_dot_product_attention(q, k, v, None);
+    let res = scaled_dot_product_attention(q.clone(), k.clone(), v.clone(), None);
+    println!(
+        "The Query Matrix : \n {:?} \n with shape {:?} \n ",
+        q,
+        q.shape()
+    );
+    println!(
+        "The Key Matrix : \n {:?} \n with shape {:?} \n ",
+        k,
+        k.shape()
+    );
+    println!(
+        "The Value Matrix : \n {:?} \n with shape {:?} \n ",
+        v,
+        v.shape()
+    );
+    println!(
+        "The scaled Query and Key Product for Attention : \n {:?} \n with shape {:?} ",
+        res,
+        res.shape()
+    );
 }
