@@ -13,6 +13,12 @@ pub fn test_softmax_vector() {
         Array1::from(vec![0.0021656966, 0.0058869733, 0.11824302, 0.87370431]);
 
     assert_eq!(res, expected);
+
+    let vec_sum = res.sum();
+    assert!(
+        1.0 - 1e-7 < vec_sum && vec_sum < 1.0 + 1e-7,
+        "Sum too far off"
+    );
 }
 
 #[test]
@@ -24,6 +30,14 @@ pub fn test_softmax_matrix() {
         [0.0900305732, 0.2447284711, 0.6652409558]
     ];
 
+    for i in 0..expected1.nrows() {
+        let vec_sum = expected1.row(i).sum();
+        assert!(
+            1.0 - 1e-6 < vec_sum && vec_sum < 1.0 + 1e-6,
+            "Sum too far off"
+        );
+    }
+
     let res1: Array2<f32> = softmax_matrix(&mat1);
 
     assert_eq!(res1, expected1);
@@ -34,8 +48,13 @@ pub fn test_softmax_matrix() {
         [0.0147534745, 0.17973413, 0.805512412],
         [0.0900305732, 0.2447284711, 0.6652409558]
     ];
-
+    for i in 0..expected2.nrows() {
+        let vec_sum = expected2.row(i).sum();
+        assert!(
+            1.0 - 1e-6 < vec_sum && vec_sum < 1.0 + 1e-6,
+            "Sum too far off"
+        );
+    }
     let res2: Array2<f32> = softmax_matrix(&mat2);
-
     assert_eq!(res2, expected2);
 }
