@@ -11,7 +11,6 @@ pub fn scaled_dot_product_attention(
 ) -> Array3<f32> {
     let scores = scaled_dot_product(q, k, v.clone(), mask);
     let sm_scores = softmax_3d(&scores);
-    // TODO implement masking
     tensor_product(&sm_scores, &v)
 }
 
