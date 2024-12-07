@@ -1,7 +1,7 @@
 #![allow(clippy::excessive_precision)]
 
-use ndarray::{array, Array, Array1, Array2, Ix1};
-use Transformer::attention::softmax::{softmax_matrix, softmax_vector};
+use ndarray::{array, Array, Array1, Array2, Array3, Ix1};
+use Transformer::attention::softmax::{softmax_3d, softmax_matrix, softmax_vector};
 
 #[test]
 pub fn test_softmax_vector() {
@@ -57,4 +57,34 @@ pub fn test_softmax_matrix() {
     }
     let res2: Array2<f32> = softmax_matrix(&mat2);
     assert_eq!(res2, expected2);
+}
+
+#[test]
+pub fn test_softmax_3d() {
+    let attention_scores: Array3<f32> = array![
+        [[2.0, 1.0, 0.1], [1.0, 2.0, 0.3]],
+        [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    ]; // Shape: (2, 2, 3)
+
+    let res = softmax_3d(&attention_scores);
+
+    let expected: Array3<f32> = array![
+        [[0.659, 0.242, 0.099], [0.237, 0.645, 0.118]],
+        [[0.300, 0.332, 0.368], [0.300, 0.332, 0.368]]
+    ];
+
+    for i in 0..expected.shape()[0] {
+        // Iterate over the first dimension
+        for j in 0..expected.shape()[1] {
+            // Iterate over the second dimension
+            for k in 0..expected.shape()[2] {
+                // Iterate over the third dimension
+
+                assert!(
+                    (res[[i, j, k]] - expected[[i, j, k]]).abs() < 0.05,
+                    "scaled dot attention too far off"
+                );
+            }
+        }
+    }
 }

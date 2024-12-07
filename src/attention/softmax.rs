@@ -1,5 +1,5 @@
 #![allow(unused_imports)] // {array} import is not recognized as it is used in #[test]
-use ndarray::{array, Array, Array1, Array2, ArrayView1, Axis};
+use ndarray::{array, s, Array, Array1, Array2, Array3, ArrayView1, Axis};
 
 pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     let max = vec.fold(f32::NEG_INFINITY, |a, &b| a.max(b)); // Stabilize by subtracting max
@@ -10,6 +10,24 @@ pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
 
 pub fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
     convert_to_array2(mat.map_axis(Axis(1), softmax_vector))
+}
+pub fn softmax_3d(attention_scores: &Array3<f32>) -> Array3<f32> {
+    let batch_size = attention_scores.shape()[0];
+    let mut softmax_result = Array3::<f32>::zeros(attention_scores.raw_dim());
+
+    for b in 0..batch_size {
+        // Extract the 2D slice for the current batch
+        let mat = attention_scores.slice(s![b, .., ..]);
+
+        // Convert the slice to a 2D array to pass into softmax_matrix
+        let mat_2d = mat.to_owned(); // Clone into Array2
+        let softmaxed = softmax_matrix(&mat_2d); // Apply softmax
+
+        // Store the result back into the appropriate slice
+        softmax_result.slice_mut(s![b, .., ..]).assign(&softmaxed);
+    }
+
+    softmax_result
 }
 
 fn convert_to_array2(array1d: Array<Array1<f32>, ndarray::Ix1>) -> Array2<f32> {
