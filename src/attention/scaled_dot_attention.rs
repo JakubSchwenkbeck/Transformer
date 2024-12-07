@@ -1,8 +1,19 @@
 #![allow(unused_variables)]
+use crate::attention::softmax::softmax_3d;
 use crate::math::linear_algebra::matmul;
 use ndarray::{array, Array3, Axis, ShapeError};
 
 pub fn scaled_dot_product_attention(
+    q: Array3<f32>, // Query
+    k: Array3<f32>, // Key
+    v: Array3<f32>, // Value
+) -> Array3<f32> {
+    let scores = scaled_dot_product(q, k, v, None);
+    let sm_scores = softmax_3d(&scores);
+    sm_scores
+}
+
+pub fn scaled_dot_product(
     q: Array3<f32>,             // Shape: (B, L_Q, d_k)
     k: Array3<f32>,             // Shape: (B, L_K, d_k)
     v: Array3<f32>,             // Shape: (B, L_K, d_v)
@@ -92,7 +103,7 @@ pub fn test_attention_matrices() {
         ]
     ];
 
-    let res = scaled_dot_product_attention(q.clone(), k.clone(), v.clone(), None);
+    let res = scaled_dot_product(q.clone(), k.clone(), v.clone(), None);
     println!(
         "The Query Matrix : \n {:?} \n with shape {:?} \n ",
         q,

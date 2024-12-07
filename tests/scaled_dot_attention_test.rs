@@ -1,7 +1,7 @@
-use ndarray::{array, Array3};
-use Transformer::attention::scaled_dot_attention::{
-    query_key_product, scaled_dot_product_attention,
-};
+use ndarray::{array, s, Array1, Array3};
+use Transformer::attention::scaled_dot_attention::{query_key_product, scaled_dot_product};
+use Transformer::attention::softmax::softmax_3d;
+
 #[test]
 fn test_query_key_product() {
     let q = array![
@@ -25,7 +25,7 @@ fn test_query_key_product() {
 
 // test values by https://medium.com/@saraswatp/understanding-scaled-dot-product-attention-in-transformer-models-5fe02b0f150c
 #[test]
-fn test_scaled_dot_attention() {
+fn test_scaled_dot() {
     let a: Array3<f32> = array![[
         [0.1, 0.2, 0.3],
         [0.4, 0.5, 0.6],
@@ -35,7 +35,7 @@ fn test_scaled_dot_attention() {
         [1.3, 1.4, 1.5]
     ]];
     // simple case, Q = V = K
-    let res = scaled_dot_product_attention(a.clone(), a.clone(), a.clone(), None);
+    let res = scaled_dot_product(a.clone(), a.clone(), a.clone(), None);
 
     let expected: Array3<f32> = array![[
         [0.081, 0.185, 0.289, 0.392, 0.081, 0.496],
@@ -62,4 +62,27 @@ fn test_scaled_dot_attention() {
     }
 
     assert_eq!(res.shape()[2], expected.shape()[2]);
+}
+
+// test values by https://medium.com/@saraswatp/understanding-scaled-dot-product-attention-in-transformer-models-5fe02b0f150c
+#[test]
+fn softmax_scaled_dot_test() {
+    let a: Array3<f32> = array![[
+        [0.1, 0.2, 0.3],
+        [0.4, 0.5, 0.6],
+        [0.7, 0.8, 0.9],
+        [1.0, 1.1, 1.2],
+        [0.1, 0.2, 0.3],
+        [1.3, 1.4, 1.5]
+    ]];
+    // simple case, Q = V = K
+    let res = softmax_3d(&scaled_dot_product(a.clone(), a.clone(), a.clone(), None));
+    let result: Array1<f32> = res.slice(s![0, 0, ..]).to_owned();
+    let expected: Array1<f32> = array![0.145, 0.162, 0.171, 0.189, 0.145, 0.21];
+    for i in 0..expected.len() {
+        assert!(
+            (result[i] - expected[i]) < 0.001,
+            "Softmax scaled dot is too far off!"
+        );
+    }
 }
