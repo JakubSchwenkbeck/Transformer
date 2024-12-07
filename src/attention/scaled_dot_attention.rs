@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use crate::attention::softmax::softmax_3d;
 use crate::math::linear_algebra::{matmul, tensor_product};
-use ndarray::{array, Array3, Axis, ShapeError};
+use ndarray::{Array3, Axis, ShapeError};
 
 pub fn scaled_dot_product_attention(
     q: Array3<f32>, // Query
