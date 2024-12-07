@@ -37,7 +37,7 @@ fn test_scaled_dot() {
         [1.3, 1.4, 1.5]
     ]];
     // simple case, Q = V = K
-    let res = scaled_dot_product(a.clone(), a.clone(), a.clone(), None);
+    let res = scaled_dot_product(a.clone(), a.clone(), a.clone(), false);
 
     let expected: Array3<f32> = array![[
         [0.081, 0.185, 0.289, 0.392, 0.081, 0.496],
@@ -78,7 +78,7 @@ fn softmax_scaled_dot_test() {
         [1.3, 1.4, 1.5]
     ]];
     // simple case, Q = V = K
-    let res = softmax_3d(&scaled_dot_product(a.clone(), a.clone(), a.clone(), None));
+    let res = softmax_3d(&scaled_dot_product(a.clone(), a.clone(), a.clone(), false));
     let result: Array1<f32> = res.slice(s![0, 0, ..]).to_owned();
     let expected: Array1<f32> = array![0.145, 0.162, 0.171, 0.189, 0.145, 0.21];
     for i in 0..expected.len() {
@@ -100,7 +100,7 @@ fn full_scaled_dot_attention_test() {
         [1.3, 1.4, 1.5]
     ]];
     // simple case, Q = V = K
-    let res = scaled_dot_product_attention(a.clone(), a.clone(), a.clone());
+    let res = scaled_dot_product_attention(a.clone(), a.clone(), a.clone(), false);
     let result: Array1<f32> = res.slice(s![0, 0, ..]).to_owned();
     let output = [0.7836, 0.8836, 0.9836];
     for i in 0..output.len() {
