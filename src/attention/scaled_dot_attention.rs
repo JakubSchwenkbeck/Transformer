@@ -15,6 +15,8 @@ pub fn scaled_dot_product_attention(
     let L_Q = q.shape()[1]; // (L_Q and L_K might be equal all along?)
     let L_K = k.shape()[1];
     let mut scores = query_key_product(q, k).unwrap();
+
+    // Scale the scores by sqrt(d_k)
     scores /= d_k.sqrt();
 
     scores
@@ -43,8 +45,6 @@ pub fn query_key_product(
             //.assign(&(q_batch.dot(&k_batch.t()))); // using my own implementation:
             .assign(&(matmul(&q_batch.to_owned(), &k_batch.t().to_owned()).unwrap()));
     }
-
-    // Scale the scores by sqrt(d_k)
 
     Ok(scores)
 }
