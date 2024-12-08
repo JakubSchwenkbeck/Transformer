@@ -103,7 +103,7 @@ fn full_scaled_dot_attention_test() {
     let res = scaled_dot_product_attention(a.clone(), a.clone(), a.clone(), false);
     let result: Array1<f32> = res.slice(s![0, 0, ..]).to_owned();
     let output = [0.7836, 0.8836, 0.9836];
-    for i in 0..output.len() {
+    for i in 0..result.len() {
         assert!(
             (result[i] - output[i]) < 0.001,
             "Softmax scaled dot is too far off!"

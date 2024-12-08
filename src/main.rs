@@ -14,7 +14,7 @@ fn main() {
         [1.3, 1.4, 1.5]
     ]];
 
-    let scores = scaled_dot_product(a.clone(), a.clone(), a.clone(), false);
+    let scores = scaled_dot_product(a.clone(), a.clone(), a.clone(), true);
     let sm_scores = softmax_3d(&scores);
     // Words corresponding to the input
     let words = ["the", "cat", "sat", "on", "the", "mat"];

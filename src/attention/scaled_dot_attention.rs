@@ -32,7 +32,7 @@ pub fn scaled_dot_product(
     scores /= d_k.sqrt();
     if mask {
         let mask = Array3::from_shape_fn((batch_size, L_Q, L_K), |(b, i, j)| {
-            if i >= j {
+            if i > j {
                 0.0
             } else {
                 f32::NEG_INFINITY
