@@ -1,4 +1,4 @@
-use ndarray::Array3;
+use ndarray::{Array3, Array4};
 use Transformer::attention::multihead_attention::*;
 
 /// Helper function to create a tensor filled with a specific value.
@@ -76,4 +76,74 @@ fn test_split_into_heads_invalid_num_heads() {
         result.is_err(),
         "Expected panic when feature_dim is not divisible by num_heads"
     );
+}
+#[test]
+fn test_single_head_attention() {
+    let batch_size = 1;
+    let num_heads = 1;
+    let seq_len_q = 3;
+    let seq_len_k = 3;
+    let d_k = 4;
+
+    // Create input arrays
+    let q_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_q, d_k));
+    let k_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+    let v_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+
+    // Call the function to compute attention for heads
+    let attention_outputs = compute_attention_for_heads(q_heads, k_heads, v_heads, false);
+
+    // Assert that the output contains one attention matrix of shape (1, 3, 4)
+    assert_eq!(attention_outputs.len(), 1);
+    assert_eq!(attention_outputs[0].shape(), &[batch_size, seq_len_q, d_k]);
+}
+
+#[test]
+fn test_multiple_heads_attention() {
+    let batch_size = 2;
+    let num_heads = 4;
+    let seq_len_q = 3;
+    let seq_len_k = 3;
+    let d_k = 4;
+
+    // Create input arrays
+    let q_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_q, d_k));
+    let k_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+    let v_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+
+    // Call the function to compute attention for heads
+    let attention_outputs = compute_attention_for_heads(q_heads, k_heads, v_heads, false);
+
+    // Assert that the output contains four attention matrices, one for each head
+    assert_eq!(attention_outputs.len(), num_heads);
+
+    // Assert that each attention output has shape (2, 2, 4)
+    for attention_output in attention_outputs.iter() {
+        assert_eq!(attention_output.shape(), &[batch_size, seq_len_q, d_k]);
+    }
+}
+
+#[test]
+fn test_mask_multiple_heads_attention() {
+    let batch_size = 2;
+    let num_heads = 4;
+    let seq_len_q = 3;
+    let seq_len_k = 3;
+    let d_k = 4;
+
+    // Create input arrays
+    let q_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_q, d_k));
+    let k_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+    let v_heads = Array4::<f32>::ones((batch_size, num_heads, seq_len_k, d_k));
+
+    // Call the function to compute attention for heads
+    let attention_outputs = compute_attention_for_heads(q_heads, k_heads, v_heads, true);
+
+    // Assert that the output contains four attention matrices, one for each head
+    assert_eq!(attention_outputs.len(), num_heads);
+
+    // Assert that each attention output has shape (2, 2, 4)
+    for attention_output in attention_outputs.iter() {
+        assert_eq!(attention_output.shape(), &[batch_size, seq_len_q, d_k]);
+    }
 }

@@ -1,6 +1,6 @@
-use ndarray::{array, Array1, Array3};
+use ndarray::{array, s, Array1, Array2, Array3};
 use std::time::Instant;
-use Transformer::math::linear_algebra::{dotproduct, matmul, tensor_product}; // Assuming you're using ndarray for matrices
+use Transformer::math::linear_algebra::{apply_projection, dotproduct, matmul, tensor_product}; // Assuming you're using ndarray for matrices
 
 #[test]
 fn test_matmul_valid_input() {
@@ -177,4 +177,67 @@ fn test_mismatch_tensor_product() {
     ];
     // This call is expected to panic due to a mismatch in dimensions.
     let _result = tensor_product(&a, &b);
+}
+#[test]
+fn test_projection() {
+    // Step 1: Define the input matrix X (B, T, D)
+    let x = Array3::from_shape_vec(
+        (2, 3, 4), // B = 2, T = 3, D = 4
+        vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+            17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0,
+        ],
+    )
+    .unwrap();
+
+    // Step 2: Define the projection matrices W_Q, W_K, W_V (D, d_k)
+    let w_q = Array2::from_shape_vec(
+        (4, 2), // D = 4, d_k = 2
+        vec![1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+    )
+    .unwrap();
+
+    let w_k = Array2::from_shape_vec(
+        (4, 2), // D = 4, d_k = 2
+        vec![0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    )
+    .unwrap();
+
+    let w_v = Array2::from_shape_vec(
+        (4, 2), // D = 4, d_v = 2
+        vec![0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+    )
+    .unwrap();
+
+    // Step 3: Perform the projections Q, K, V
+    let q = apply_projection(&x, &w_q); // Shape: [B, T, d_k]
+    let k = apply_projection(&x, &w_k); // Shape: [B, T, d_k]
+    let v = apply_projection(&x, &w_v); // Shape: [B, T, d_v]
+
+    // Step 4: Define the expected projections for Q, K, V
+    let expected_q_1 = Array2::from_shape_vec((3, 2), vec![1.0, 2.0, 5.0, 6.0, 9.0, 10.0]).unwrap();
+
+    let expected_k_1 = Array2::from_shape_vec((3, 2), vec![2.0, 1.0, 6.0, 5.0, 10.0, 9.0]).unwrap();
+
+    let expected_v_1 =
+        Array2::from_shape_vec((3, 2), vec![3.0, 2.0, 7.0, 6.0, 11.0, 10.0]).unwrap();
+
+    let expected_q_2 =
+        Array2::from_shape_vec((3, 2), vec![13.0, 14.0, 17.0, 18.0, 21.0, 22.0]).unwrap();
+
+    let expected_k_2 =
+        Array2::from_shape_vec((3, 2), vec![14.0, 13.0, 18.0, 17.0, 22.0, 21.0]).unwrap();
+
+    let expected_v_2 =
+        Array2::from_shape_vec((3, 2), vec![15.0, 14.0, 19.0, 18.0, 23.0, 22.0]).unwrap();
+
+    // Step 5: Assert that the computed values match the expected ones
+    assert_eq!(q.slice(s![0, .., ..]), expected_q_1);
+    assert_eq!(q.slice(s![1, .., ..]), expected_q_2);
+
+    assert_eq!(k.slice(s![0, .., ..]), expected_k_1);
+    assert_eq!(k.slice(s![1, .., ..]), expected_k_2);
+
+    assert_eq!(v.slice(s![0, .., ..]), expected_v_1);
+    assert_eq!(v.slice(s![1, .., ..]), expected_v_2);
 }
