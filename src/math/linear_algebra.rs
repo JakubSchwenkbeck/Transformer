@@ -59,3 +59,24 @@ pub fn tensor_product(a: &Array3<f32>, b: &Array3<f32>) -> Array3<f32> {
 
     result
 }
+pub fn apply_projection(x: &Array3<f32>, w: &Array2<f32>) -> Array3<f32> {
+    let batch_size = x.shape()[0];
+    let seq_len = x.shape()[1];
+    let d_model = x.shape()[2]; // Should be the same as w.shape()[0]
+    assert_eq!(d_model, w.shape()[0]);
+    let d_k = w.shape()[1]; // Output dimension (head dimension)
+
+    // Initialize the result tensor with shape (batch_size, seq_len, d_k)
+    let mut result = Array3::<f32>::zeros((batch_size, seq_len, d_k));
+
+    // Perform matrix multiplication for each batch
+    for i in 0..batch_size {
+        let x_slice = x.slice(s![i, .., ..]); // Slice the i-th batch (shape: (seq_len, d_model))
+        let mul = matmul(&x_slice.to_owned(), w); // Perform matrix multiplication
+        if mul.is_ok() {
+            result.slice_mut(s![i, .., ..]).assign(&mul.unwrap());
+        }
+    }
+
+    result
+}

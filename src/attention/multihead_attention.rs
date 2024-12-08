@@ -1,51 +1,87 @@
-#![allow(warnings)] // work in progress
-use ndarray::{Array3, Array4};
+#![allow(warnings)]
+use crate::attention::scaled_dot_attention::scaled_dot_product_attention;
+use crate::math::linear_algebra::apply_projection;
+use ndarray::{s, Array2, Array3, Array4};
 
 pub fn multi_head_attention(
-    q: Array3<f32>,            // Query: Shape (B, L_Q, d_model)
-    k: Array3<f32>,            // Key: Shape (B, L_K, d_model)
-    v: Array3<f32>,            // Value: Shape (B, L_K, d_model)
-    num_heads: usize,          // Number of attention heads
-    mask: Option<Array3<f32>>, // Mask for attention (optional)
+    q: Array3<f32>,   // Query: Shape (B, L_Q, d_model)
+    k: Array3<f32>,   // Key: Shape (B, L_K, d_model)
+    v: Array3<f32>,   // Value: Shape (B, L_K, d_model)
+    num_heads: usize, // Number of attention heads
+    mask: bool,       // Mask for attention (optional)
+    w_q: Array2<f32>, // Learned projection matrix for Q: Shape (d_model, d_k)
+    w_k: Array2<f32>, // Learned projection matrix for K: Shape (d_model, d_k)
+    w_v: Array2<f32>, // Learned projection matrix for V: Shape (d_model, d_k)
+    w_o: Array2<f32>, // final linear projection
 ) -> Array3<f32> {
-    // 1. Project the Q, K, V tensors into different subspaces for each head.
-    // 2. Apply scaled dot-product attention on each head in parallel.
-    // 3. Concatenate the outputs of all heads.
-    // 4. Apply a final linear transformation to the concatenated result.
+    // Linearly project Q, K, V
+    let q_projected = apply_projection(&q, &w_q); // Shape: (B, L_Q, d_k)
+    let k_projected = apply_projection(&k, &w_k); // Shape: (B, L_K, d_k)
+    let v_projected = apply_projection(&v, &w_v); // Shape: (B, L_K, d_k)
 
-    // Step 1: Linearly project Q, K, V for each head
-    let (q_heads, k_heads, v_heads) = split_into_heads(&q, &k, &v, num_heads);
+    // split into heads
+    let (q_heads, k_heads, v_heads) =
+        split_into_heads(&q_projected, &k_projected, &v_projected, num_heads);
 
-    // Step 2: Compute the attention for each head
+    //  Compute the attention for each head
     let attention_outputs = compute_attention_for_heads(q_heads, k_heads, v_heads, mask);
 
-    // Step 3: Concatenate the output of all attention heads
+    //  Concatenate the output of all attention heads
     let concatenated_output = concat_heads(attention_outputs, num_heads);
 
-    // Step 4: Apply the final linear transformation (W_O) to the concatenated output
-    let output = linear_transformation(concatenated_output);
-
-    output
-}
-
-pub fn linear_transformation(concatenated_output: Array3<f32>) -> Array3<f32> {
-    todo!()
+    // Apply the final linear transformation (W_O) to the concatenated output
+    apply_projection(&concatenated_output, &w_o)
 }
 
 pub fn concat_heads(
     attention_outputs: Vec<Array3<f32>>, // List of attention outputs for each head
     num_heads: usize,                    // Number of heads
 ) -> Array3<f32> {
-    todo!()
+    let batch_size = attention_outputs[0].shape()[0];
+    let seq_length = attention_outputs[0].shape()[1];
+    let d_k = attention_outputs[0].shape()[2]; // d_k is the feature size for each head
+
+    // Concatenate the outputs from all heads
+    let mut concatenated = Array3::<f32>::zeros((batch_size, seq_length, num_heads * d_k));
+
+    for i in 0..num_heads {
+        // Get the output for head i and place it in the appropriate slice of the concatenated tensor
+        let head_output = &attention_outputs[i];
+        concatenated
+            .slice_mut(s![.., .., i * d_k..(i + 1) * d_k])
+            .assign(head_output);
+    }
+
+    concatenated
 }
 
+/// Compute attention for each head in the multi-head attention.
 pub fn compute_attention_for_heads(
-    q_heads: Array4<f32>,      // Shape: (B, num_heads, L_Q, d_k)
-    k_heads: Array4<f32>,      // Shape: (B, num_heads, L_K, d_k)
-    v_heads: Array4<f32>,      // Shape: (B, num_heads, L_K, d_k)
-    mask: Option<Array3<f32>>, // Mask for attention (optional)
+    q_heads: Array4<f32>, // Shape: (B, num_heads, L_Q, d_k)
+    k_heads: Array4<f32>, // Shape: (B, num_heads, L_K, d_k)
+    v_heads: Array4<f32>, // Shape: (B, num_heads, L_K, d_k)
+    mask: bool,           // Mask for attention (optional)
 ) -> Vec<Array3<f32>> {
-    todo!()
+    let num_heads = q_heads.shape()[1];
+
+    // Initialize a Vec to store the attention results for each head
+    let mut attention_results = Vec::with_capacity(num_heads);
+
+    // Iterate over each head and apply scaled dot-product attention
+    for head_idx in 0..num_heads {
+        // Slice Q, K, V for the current head
+        let q_head = q_heads.slice(s![.., head_idx, .., ..]).to_owned(); // Shape: (B, L_Q, d_k)
+        let k_head = k_heads.slice(s![.., head_idx, .., ..]).to_owned(); // Shape: (B, L_K, d_k)
+        let v_head = v_heads.slice(s![.., head_idx, .., ..]).to_owned(); // Shape: (B, L_K, d_k)
+
+        // Compute attention for the current head
+        let attention_output = scaled_dot_product_attention(q_head, k_head, v_head, mask);
+
+        // Store the result in the output vector
+        attention_results.push(attention_output);
+    }
+
+    attention_results
 }
 
 /// Splits Q, K, and V into multiple heads.
