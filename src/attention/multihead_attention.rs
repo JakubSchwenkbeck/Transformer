@@ -14,7 +14,7 @@ pub fn multi_head_attention(
     // 4. Apply a final linear transformation to the concatenated result.
 
     // Step 1: Linearly project Q, K, V for each head
-    let (q_heads, k_heads, v_heads) = split_into_heads(q, k, v, num_heads);
+    let (q_heads, k_heads, v_heads) = split_into_heads(&q, &k, &v, num_heads);
 
     // Step 2: Compute the attention for each head
     let attention_outputs = compute_attention_for_heads(q_heads, k_heads, v_heads, mask);
@@ -40,9 +40,9 @@ pub fn concat_heads(
 }
 
 pub fn compute_attention_for_heads(
-    q_heads: Array3<f32>,      // Shape: (B, num_heads, L_Q, d_k)
-    k_heads: Array3<f32>,      // Shape: (B, num_heads, L_K, d_k)
-    v_heads: Array3<f32>,      // Shape: (B, num_heads, L_K, d_k)
+    q_heads: Array4<f32>,      // Shape: (B, num_heads, L_Q, d_k)
+    k_heads: Array4<f32>,      // Shape: (B, num_heads, L_K, d_k)
+    v_heads: Array4<f32>,      // Shape: (B, num_heads, L_K, d_k)
     mask: Option<Array3<f32>>, // Mask for attention (optional)
 ) -> Vec<Array3<f32>> {
     todo!()
@@ -59,7 +59,12 @@ pub fn compute_attention_for_heads(
 /// # Returns
 /// Returns a tuple of 4D arrays: (Q_heads, K_heads, V_heads), where each has shape
 /// (batch_size, num_heads, seq_len, head_dim)
-fn split_into_heads(q: &Array3<f32>, k: &Array3<f32>, v: &Array3<f32>, num_heads: usize) -> (Array4<f32>, Array4<f32>, Array4<f32>) {
+pub fn split_into_heads(
+    q: &Array3<f32>,
+    k: &Array3<f32>,
+    v: &Array3<f32>,
+    num_heads: usize,
+) -> (Array4<f32>, Array4<f32>, Array4<f32>) {
     let batch_size = q.shape()[0];
     let seq_len = q.shape()[1];
     let feature_dim = q.shape()[2];
@@ -91,5 +96,3 @@ fn split_into_heads(q: &Array3<f32>, k: &Array3<f32>, v: &Array3<f32>, num_heads
 
     (q_heads, k_heads, v_heads)
 }
-
-
