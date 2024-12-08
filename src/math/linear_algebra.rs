@@ -59,6 +59,14 @@ pub fn tensor_product(a: &Array3<f32>, b: &Array3<f32>) -> Array3<f32> {
 
     result
 }
+/// Applies a linear projection to a 3D tensor using a weight matrix.
+///
+/// # Arguments
+/// - `x`: The input 3D tensor (e.g., [batch, seq_len, input_dim]).
+/// - `w`: The weight matrix for the projection (e.g., [input_dim, output_dim]).
+///
+/// # Returns
+/// A new 3D tensor with the projection applied (e.g., [batch, seq_len, output_dim]).
 pub fn apply_projection(x: &Array3<f32>, w: &Array2<f32>) -> Array3<f32> {
     let batch_size = x.shape()[0];
     let seq_len = x.shape()[1];

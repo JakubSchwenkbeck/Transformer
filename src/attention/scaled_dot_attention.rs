@@ -3,6 +3,16 @@ use crate::attention::softmax::softmax_3d;
 use crate::math::linear_algebra::{matmul, tensor_product};
 use ndarray::{Array3, Axis, ShapeError};
 
+/// Computes the scaled dot-product attention.
+///
+/// # Arguments
+/// - `q`: The query tensor (e.g., [batch, seq_len, dim]).
+/// - `k`: The key tensor (e.g., [batch, seq_len, dim]).
+/// - `v`: The value tensor (e.g., [batch, seq_len, dim]).
+/// - `mask`: Whether to apply a mask to the attention scores (useful for causal or padding masks).
+///
+/// # Returns
+/// The resulting attention output tensor (e.g., [batch, seq_len, dim]).
 pub fn scaled_dot_product_attention(
     q: Array3<f32>, // Query
     k: Array3<f32>, // Key
@@ -13,7 +23,7 @@ pub fn scaled_dot_product_attention(
     let sm_scores = softmax_3d(&scores);
     tensor_product(&sm_scores, &v)
 }
-
+/// Performs the scaled dot product of query, key, and value tensors and optionally use mask.
 pub fn scaled_dot_product(
     q: Array3<f32>, // Shape: (B, L_Q, d_k)
     k: Array3<f32>, // Shape: (B, L_K, d_k)
@@ -32,7 +42,8 @@ pub fn scaled_dot_product(
     scores /= d_k.sqrt();
     if mask {
         let mask = Array3::from_shape_fn((batch_size, L_Q, L_K), |(b, i, j)| {
-            if i > j {
+            if i == j {
+                // for Training this should be i > j
                 0.0
             } else {
                 f32::NEG_INFINITY
@@ -56,6 +67,8 @@ pub fn scaled_dot_product(
     }
     scores
 }
+
+/// Performs the dot product of query, key, and value tensors.
 pub fn query_key_product(
     q: Array3<f32>, // Shape: (B, L_Q, d_k)
     k: Array3<f32>, // Shape: (B, L_K, d_k)

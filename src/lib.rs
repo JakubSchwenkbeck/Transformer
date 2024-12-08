@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+pub mod example;
 mod settings;
 
 // this lint makes a scene ....
