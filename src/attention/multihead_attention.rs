@@ -1,4 +1,5 @@
-use ndarray::Array3;
+#![allow(warnings)] // work in progress
+use ndarray::{Array3, Array4};
 
 pub fn multi_head_attention(
     q: Array3<f32>,            // Query: Shape (B, L_Q, d_model)
@@ -46,11 +47,49 @@ pub fn compute_attention_for_heads(
 ) -> Vec<Array3<f32>> {
     todo!()
 }
-pub fn split_into_heads(
-    q: Array3<f32>,   // Query: Shape (B, L_Q, d_model)
-    k: Array3<f32>,   // Key: Shape (B, L_K, d_model)
-    v: Array3<f32>,   // Value: Shape (B, L_K, d_model)
-    num_heads: usize, // Number of heads
-) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    todo!()
+
+/// Splits Q, K, and V into multiple heads.
+///
+/// # Arguments
+/// * `q` - Query matrix with shape (batch_size, seq_len, feature_dim)
+/// * `k` - Key matrix with shape (batch_size, seq_len, feature_dim)
+/// * `v` - Value matrix with shape (batch_size, seq_len, feature_dim)
+/// * `num_heads` - The number of attention heads
+///
+/// # Returns
+/// Returns a tuple of 4D arrays: (Q_heads, K_heads, V_heads), where each has shape
+/// (batch_size, num_heads, seq_len, head_dim)
+fn split_into_heads(q: &Array3<f32>, k: &Array3<f32>, v: &Array3<f32>, num_heads: usize) -> (Array4<f32>, Array4<f32>, Array4<f32>) {
+    let batch_size = q.shape()[0];
+    let seq_len = q.shape()[1];
+    let feature_dim = q.shape()[2];
+
+    // Compute the head dimension (feature_dim / num_heads)
+    let head_dim = feature_dim / num_heads;
+
+    // Reshape Q, K, and V into a 4D tensor with shape (batch_size, num_heads, seq_len, head_dim)
+    let q_heads = q
+        .view()
+        .to_shape((batch_size, seq_len, num_heads, head_dim))
+        .unwrap()
+        .permuted_axes([0, 2, 1, 3]) // Swap axes to get shape (batch_size, num_heads, seq_len, head_dim)
+        .to_owned();
+
+    let k_heads = k
+        .view()
+        .to_shape((batch_size, seq_len, num_heads, head_dim))
+        .unwrap()
+        .permuted_axes([0, 2, 1, 3]) // Swap axes to get shape (batch_size, num_heads, seq_len, head_dim)
+        .to_owned();
+
+    let v_heads = v
+        .view()
+        .to_shape((batch_size, seq_len, num_heads, head_dim))
+        .unwrap()
+        .permuted_axes([0, 2, 1, 3]) // Swap axes to get shape (batch_size, num_heads, seq_len, head_dim)
+        .to_owned();
+
+    (q_heads, k_heads, v_heads)
 }
+
+
