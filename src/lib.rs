@@ -27,5 +27,6 @@ pub mod attention {
 }
 
 pub mod layers {
+    pub mod feedforward_layer;
     pub mod normalization;
 }
