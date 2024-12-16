@@ -5,7 +5,6 @@ mod settings;
 
 pub mod model {
     pub mod encoder;
-
 }
 
 // this lint makes a scene ....
