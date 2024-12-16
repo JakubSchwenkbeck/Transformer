@@ -54,30 +54,33 @@ impl FeedForwardLayer {
         // Second linear layer
         first_activation.dot(&self.weights2).add(&self.bias2)
     }
-        /// Forward pass through the feed-forward layer.
-        ///
-        /// # Parameters:
-        /// - `x`: Input tensor of shape (batch_size, seq_length, d_model).
-        ///
-        /// # Returns:
-        /// - Output tensor of shape (batch_size, seq_length, d_model).
-        pub fn forward(&self, x: Array3<f32>) -> Array3<f32> {
-            let batch_size = x.shape()[0];
-            let seq_length = x.shape()[1];
-            let d_model = x.shape()[2];
+    /// Forward pass through the feed-forward layer.
+    ///
+    /// # Parameters:
+    /// - `x`: Input tensor of shape (batch_size, seq_length, d_model).
+    ///
+    /// # Returns:
+    /// - Output tensor of shape (batch_size, seq_length, d_model).
+    pub fn forward(&self, x: Array3<f32>) -> Array3<f32> {
+        let batch_size = x.shape()[0];
+        let seq_length = x.shape()[1];
+        let d_model = x.shape()[2];
 
-            // Flatten the input to 2D: (batch_size * seq_length, d_model)
-            let reshaped_x = x.to_shape((batch_size * seq_length, d_model)).unwrap();
+        // Flatten the input to 2D: (batch_size * seq_length, d_model)
+        let reshaped_x = x.to_shape((batch_size * seq_length, d_model)).unwrap();
 
-            // First linear layer + ReLU
-            let hidden = (reshaped_x.dot(&self.weights1) + &self.bias1).mapv(gelu);
+        // First linear layer + ReLU
+        let hidden = gelu(&(reshaped_x.dot(&self.weights1) + &self.bias1).to_owned());
 
-            // Second linear layer
-            let output = hidden.dot(&self.weights2) + &self.bias2;
+        // Second linear layer
+        let output = hidden.dot(&self.weights2) + &self.bias2;
 
-            // Reshape back to 3D: (batch_size, seq_length, d_model)
-            output.to_shape((batch_size, seq_length, d_model)).unwrap().to_owned()
-        }
+        // Reshape back to 3D: (batch_size, seq_length, d_model)
+        output
+            .to_shape((batch_size, seq_length, d_model))
+            .unwrap()
+            .to_owned()
+    }
 
     fn apply_dropout(&self, input: &Array2<f32>) -> Array2<f32> {
         let mut rng = rand::rng();
