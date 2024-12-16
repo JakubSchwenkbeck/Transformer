@@ -4,10 +4,8 @@ pub mod example;
 mod settings;
 
 pub mod model {
-    pub mod decoder;
     pub mod encoder;
 
-    pub mod stacked;
 }
 
 // this lint makes a scene ....
