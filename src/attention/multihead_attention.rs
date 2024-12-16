@@ -76,8 +76,9 @@ pub fn split_into_heads(
     // Compute the head dimension (feature_dim / num_heads)
     let head_dim = feature_dim / num_heads;
 
-    assert!(
-        feature_dim % num_heads == 0,
+    assert_eq!(
+        feature_dim % num_heads,
+        0,
         "feature_dim must be divisible by num_heads"
     );
 
