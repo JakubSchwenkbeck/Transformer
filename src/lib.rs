@@ -1,13 +1,14 @@
 #![allow(non_snake_case)]
 
 pub mod example;
-mod settings;
+pub mod settings;
 
 pub mod data {
     pub mod tokenizer;
 }
 pub mod model {
     pub mod decoder;
+    pub mod embedding;
     pub mod encoder;
 }
 
