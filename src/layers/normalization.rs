@@ -22,9 +22,7 @@ pub fn layer_norm(
 
     let expanded_mean = mean.insert_axis(Axis(1)); // Expands [6] to [6, 1]
     let expanded_variance = variance.insert_axis(Axis(1)); // Expands [6] to [6, 1]
-    eprintln!("x shape: {:?}", x.shape());
-    eprintln!("mean shape: {:?}", expanded_mean.shape());
-    eprintln!("variance shape: {:?}", expanded_variance.shape());
+
     // Add epsilon to expanded variance
     let normalized = (x - &expanded_mean) / (expanded_variance + epsilon).mapv(f32::sqrt);
 

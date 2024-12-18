@@ -1,30 +1,33 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
+
 use crate::activation::activation_functions::gelu;
 use crate::settings::HIDDEN_SIZE;
-use ndarray::{array, Array2, Array3};
+use ndarray::{array, Array1, Array2, Array3};
 use rand::Rng;
 use std::ops::Add;
 
 pub struct FeedForwardLayer {
     weights1: Array2<f32>,
-    bias1: Array2<f32>, // weights and biases for first linear layer
+    bias1: Array1<f32>, // weights and biases for first linear layer
 
     weights2: Array2<f32>,
-    bias2: Array2<f32>, // weights and biases for second linear layer
+    bias2: Array1<f32>, // weights and biases for second linear layer
 
     dropout_rate: f32, // Dropout rate
 }
 impl FeedForwardLayer {
     // init with random values
-    pub fn new(input_size: usize, output_size: usize, dropout_rate: f32) -> FeedForwardLayer {
+    pub fn new(batch_size: usize,input_size: usize, output_size: usize, dropout_rate: f32) -> FeedForwardLayer {
+
+        let hidden_size = input_size * 4; // Define the hidden layer size
+
         // He (Kaiming) initialization for weights
-        let weights1 = he_initialization(input_size, HIDDEN_SIZE);
-        let bias1 = bias_initialization(HIDDEN_SIZE, HIDDEN_SIZE);
+        let weights1 = he_initialization(input_size, hidden_size); // Shape: (input_size, hidden_size)
+        let bias1 = bias_initialization(hidden_size); // Shape: (hidden_size,)
 
-        let weights2 = he_initialization(HIDDEN_SIZE, output_size);
-        let bias2 = bias_initialization(HIDDEN_SIZE, output_size);
-
+        let weights2 = he_initialization(hidden_size, output_size); // Shape: (hidden_size, output_size)
+        let bias2 = bias_initialization(output_size); // Shape: (output_size,)
         FeedForwardLayer {
             weights1,
             bias1,
@@ -68,6 +71,7 @@ impl FeedForwardLayer {
         match reshaped_x {
             Ok(valid_reshaped_x) => {
                 let dot = valid_reshaped_x.dot(&self.weights1);
+
 
                 let add = dot + &self.bias1;
 
@@ -124,16 +128,20 @@ fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
     Array2::from_shape_vec((input_size, output_size), values).unwrap()
 }
 
-fn bias_initialization(size: usize, second: usize) -> Array2<f32> {
-    Array2::zeros((size, second)) // Biases are usually initialized to zero
+
+fn bias_initialization(size: usize) -> Array1<f32> {
+    Array1::zeros(size)
 }
+
+
+
 fn test_bias_initialization() {
     let size = 5;
 
-    let bias = bias_initialization(size, 6);
+    let bias = bias_initialization(size);
 
     // Check that the dimensions are correct (size x 1)
-    assert_eq!(bias.shape(), &[size, 6]);
+    assert_eq!(bias.shape(), &[size,]);
 
     // Check that all values in the bias array are 0.0
     for &value in bias.iter() {
@@ -158,7 +166,7 @@ fn test_feedforward_forward() {
     ];
 
     // Create a FeedForwardLayer instance
-    let feed_forward_layer = FeedForwardLayer::new(4, 4, 0.1);
+    let feed_forward_layer = FeedForwardLayer::new(2,4, 4, 0.1);
 
     // Feed forward through the layer
     let feed_forward_output = feed_forward_layer.forward(input.clone());
