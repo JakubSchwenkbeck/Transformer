@@ -3,6 +3,9 @@
 pub mod example;
 mod settings;
 
+pub mod data {
+    pub mod tokenizer;
+}
 pub mod model {
     pub mod decoder;
     pub mod encoder;
