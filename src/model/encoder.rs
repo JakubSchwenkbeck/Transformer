@@ -97,7 +97,7 @@ fn test_encoding() {
     let beta = array![[0.0, 0.0, 0.0, 0.0]];
 
     // Dummy FeedForwardLayer
-    let feed_forward_layer = FeedForwardLayer::new(2,4, 4, 0.1);
+    let feed_forward_layer = FeedForwardLayer::new(2, 4, 4, 0.1);
 
     // Call the encoding function
     let epsilon = 1e-6;

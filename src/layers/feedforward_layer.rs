@@ -18,8 +18,12 @@ pub struct FeedForwardLayer {
 }
 impl FeedForwardLayer {
     // init with random values
-    pub fn new(batch_size: usize,input_size: usize, output_size: usize, dropout_rate: f32) -> FeedForwardLayer {
-
+    pub fn new(
+        _batch_size: usize,
+        input_size: usize,
+        output_size: usize,
+        dropout_rate: f32,
+    ) -> FeedForwardLayer {
         let hidden_size = input_size * 4; // Define the hidden layer size
 
         // He (Kaiming) initialization for weights
@@ -71,7 +75,6 @@ impl FeedForwardLayer {
         match reshaped_x {
             Ok(valid_reshaped_x) => {
                 let dot = valid_reshaped_x.dot(&self.weights1);
-
 
                 let add = dot + &self.bias1;
 
@@ -128,12 +131,9 @@ fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
     Array2::from_shape_vec((input_size, output_size), values).unwrap()
 }
 
-
 fn bias_initialization(size: usize) -> Array1<f32> {
     Array1::zeros(size)
 }
-
-
 
 fn test_bias_initialization() {
     let size = 5;
@@ -166,7 +166,7 @@ fn test_feedforward_forward() {
     ];
 
     // Create a FeedForwardLayer instance
-    let feed_forward_layer = FeedForwardLayer::new(2,4, 4, 0.1);
+    let feed_forward_layer = FeedForwardLayer::new(2, 4, 4, 0.1);
 
     // Feed forward through the layer
     let feed_forward_output = feed_forward_layer.forward(input.clone());
