@@ -20,8 +20,19 @@ pub fn layer_norm(
     let mean = x.mean_axis(Axis(1)).unwrap();
     let variance = x.var_axis(Axis(1), 0.0);
 
+
+
+    let expanded_mean = mean.insert_axis(Axis(1)); // Expands [6] to [6, 1]
+    let expanded_variance = variance.insert_axis(Axis(1)); // Expands [6] to [6, 1]
+    eprintln!("x shape: {:?}", x.shape());
+    eprintln!("mean shape: {:?}", expanded_mean.shape());
+    eprintln!("variance shape: {:?}", expanded_variance.shape());
+    // Add epsilon to expanded variance
+    let normalized = (x - &expanded_mean) / (expanded_variance + epsilon).mapv(f32::sqrt);
+
+
     // Step 2: Normalize the input
-    let normalized = (x - &mean) / (variance + epsilon).mapv(f32::sqrt);
+    //let normalized = (x - &reshaped_mean) / (reshaped_variance + epsilon).mapv(f32::sqrt);
 
     // Step 3: Apply scaling (gamma) and shifting (beta)
     normalized * gamma + beta
