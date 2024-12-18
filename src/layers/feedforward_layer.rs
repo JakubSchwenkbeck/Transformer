@@ -71,27 +71,6 @@ impl FeedForwardLayer {
 
         match reshaped_x {
             Ok(valid_reshaped_x) => {
-                // debug hidden
-                // Debugging shapes before performing operations
-                let reshaped_shape = valid_reshaped_x.shape();
-                let weights_shape = self.weights1.shape();
-                let bias_shape = self.bias1.shape();
-
-                if reshaped_shape[1] != weights_shape[0] {
-                    eprintln!(
-                        "Shape mismatch: reshaped_x's last dimension ({}) must match weights1's first dimension ({})",
-                        reshaped_shape[1], weights_shape[0]
-                    );
-                    //  Err("Shape mismatch: reshaped_x and weights1 are incompatible".into());
-                }
-
-                if weights_shape[1] != bias_shape[0] {
-                    eprintln!(
-                        "Shape mismatch: weights1's second dimension ({}) must match bias1's first dimension ({})",
-                        weights_shape[1], bias_shape[0]
-                    );
-                    //Err("Shape mismatch: weights1 and bias1 are incompatible".into());
-                }
 
                 let dot = valid_reshaped_x.dot(&self.weights1);
 
