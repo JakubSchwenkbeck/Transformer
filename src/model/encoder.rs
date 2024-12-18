@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::attention::multihead_attention::multi_head_attention;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
@@ -96,7 +97,7 @@ fn test_encoding() {
     let beta = array![[0.0, 0.0, 0.0, 0.0]];
 
     // Dummy FeedForwardLayer
-    let feed_forward_layer = FeedForwardLayer::new(4, 4,  0.1);
+    let feed_forward_layer = FeedForwardLayer::new(4, 4, 0.1);
 
     // Call the encoding function
     let epsilon = 1e-6;
@@ -104,5 +105,4 @@ fn test_encoding() {
 
     // Assert that the output has the correct shape
     assert_eq!(output.shape(), &[2, 3, 4]);
-
 }
