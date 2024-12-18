@@ -1,7 +1,7 @@
 use crate::attention::multihead_attention::multi_head_attention;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
-use ndarray::{Array2, Array3};
+use ndarray::{array, Array2, Array3};
 use std::ops::Add;
 
 /// Implements a Transformer Encoder layer.
@@ -74,4 +74,37 @@ pub fn encoding(
     .to_owned();
 
     output
+}
+#[test]
+fn test_encoding() {
+    // Dummy input tensor (batch_size = 2, seq_length = 3, d_model = 4)
+    let input = array![
+        [
+            [0.1, 0.2, 0.3, 0.4],
+            [0.5, 0.6, 0.7, 0.8],
+            [0.9, 1.0, 1.1, 1.2],
+        ],
+        [
+            [1.3, 1.4, 1.5, 1.6],
+            [1.7, 1.8, 1.9, 2.0],
+            [2.1, 2.2, 2.3, 2.4],
+        ]
+    ];
+
+    // Dummy gamma and beta (scale and shift for layer normalization)
+    let gamma = array![[1.0, 1.0, 1.0, 1.0]];
+    let beta = array![[0.0, 0.0, 0.0, 0.0]];
+
+    // Dummy FeedForwardLayer
+    let feed_forward_layer = FeedForwardLayer::new(4, 4,  0.1);
+
+    // Call the encoding function
+    let epsilon = 1e-6;
+    let output = encoding(input, gamma, beta, epsilon, &feed_forward_layer);
+
+    // Assert that the output has the correct shape
+    assert_eq!(output.shape(), &[2, 3, 4]);
+    for value in output.iter() {
+        assert!(*value >= 0.0);
+    }
 }
