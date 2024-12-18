@@ -35,7 +35,7 @@ pub fn decoding(
     let reshaped_attention = attention_residual
         .to_shape((batch_size * seq_length, d_model)) // Flatten to 2D
         .unwrap();
-    let attention_norm:Array3<f32> = layer_norm(
+    let attention_norm: Array3<f32> = layer_norm(
         &reshaped_attention.to_owned(), // Convert to 2D for layer_norm
         &gamma,
         &beta,
@@ -46,6 +46,4 @@ pub fn decoding(
     .to_owned();
 
     attention_norm
-
-
 }
