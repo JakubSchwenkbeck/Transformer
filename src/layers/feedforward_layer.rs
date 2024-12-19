@@ -15,6 +15,7 @@ pub struct FeedForwardLayer {
     bias2: Array1<f32>, // weights and biases for second linear layer
 
     dropout_rate: f32, // Dropout rate
+    initialized: bool,
 }
 impl FeedForwardLayer {
     // init with random values
@@ -38,9 +39,12 @@ impl FeedForwardLayer {
             weights2,
             bias2,
             dropout_rate,
+            initialized: true,
         }
     }
-
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
+    }
     pub fn forward_t(&self, input: &Array2<f32>, train: bool) -> Array2<f32> {
         // First linear layer
         let first_dot = input.dot(&self.weights1);

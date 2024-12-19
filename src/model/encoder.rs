@@ -2,6 +2,8 @@
 use crate::attention::multihead_attention::multi_head_attention;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
+use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
+use contracts::{debug_requires, requires};
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
 
@@ -16,6 +18,11 @@ use std::ops::Add;
 ///
 /// # Returns:
 /// - Output tensor of shape (batch_size, seq_length, d_model) after passing through the encoder layer.
+
+#[requires(input.shape()[2] == gamma.shape()[1], "Gamma dimensions do not match input feature size")]
+#[requires(input.shape()[2] == beta.shape()[1], "Beta dimensions do not match input feature size")]
+#[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
+#[requires(feed_forward_layer.is_initialized(), "Feed-forward layer is not properly initialized")]
 pub fn encoding(
     input: Array3<f32>,                    // Input tensor
     gamma: Array2<f32>,                    // Scale parameter for layer norm
