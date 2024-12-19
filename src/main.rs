@@ -8,7 +8,7 @@ use Transformer::model::decoder::decoding;
 use Transformer::model::embedding::Embedding;
 use Transformer::model::encoder::encoding;
 use Transformer::model::transformer_model::transformer_model;
-use Transformer::settings::{BATCH_SIZE, DROPOUT_RATE, INPUT_SIZE, OUTPUT_SIZE};
+use Transformer::settings::{BATCH_SIZE, DROPOUT_RATE, EMBEDDING_SIZE, INPUT_SIZE, OUTPUT_SIZE};
 
 fn main() {
     println!("runs successfully!");
@@ -40,9 +40,10 @@ fn main() {
     let embeddings = embedding.forward(tokens.clone());
 
     // Convert embeddings to Array3 (batch_size, seq_length, embed_size)
-    let input_tensor = Array3::from_shape_fn((1, tokens.len(), 12), |(batch, seq, _)| {
-        embeddings[[seq, batch]]
-    });
+    let input_tensor = Array3::from_shape_fn(
+        (BATCH_SIZE, tokens.len(), EMBEDDING_SIZE),
+        |(batch, seq, _)| embeddings[[seq, batch]],
+    );
 
     println!("INPUT : {}", input_tensor.clone());
     // Initialize gamma and beta for layer normalization
