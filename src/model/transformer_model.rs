@@ -3,15 +3,18 @@ use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::flatten_3d_array;
 use crate::model::decoder::decoding;
-use crate::model::embedding::Embedding;
+use crate::model::embedding::{predict_tokens, Embedding};
 use crate::model::encoder::encoding;
 use crate::settings::*;
-use ndarray::{Array2, Array3};
+use ndarray::{Array1, Array2, Array3};
 use std::collections::HashMap;
+use rand::Rng;
+use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
+
 pub fn transformer_model(
     sentence: &str,                 // Input sentence
     vocab: &HashMap<String, usize>, // Vocabulary
-) -> String {
+) -> Vec<String> {
     // Initialize Tokenizer and Embedding layer
     let tokenizer = Tokenizer::new(vocab.clone());
     let embedding = Embedding::new(vocab.len(), EMBEDDING_SIZE); // Initialize embedding layer
@@ -53,12 +56,14 @@ pub fn transformer_model(
         &feed_forward_layer,
     );
 
-    // Flatten the decoded output (to make it compatible for token retrieval)
-    let decoded_flat = flatten_3d_array(decoded);
+    // Apply final linear transformation
+    let output_projection = Array2::ones((OUTPUT_SIZE, vocab.len())); // All ones weights
+    let logits = flatten_3d_array(decoded).dot(&output_projection); // Linear layer
 
-    // Retrieve the most probable token using the embeddings
-    let token = embedding.retrieve_tokens(decoded_flat, &vocab);
+    // Apply softmax to logits
+    let probabilities = softmax_matrix(&logits);
 
-    // Return the most probable token (first token from the list)
-    token.get(0).cloned().unwrap_or("Unknown".to_string())
+    // Convert probabilities back to text using the tokenizer
+    predict_tokens(probabilities.view(), vocab)
+
 }

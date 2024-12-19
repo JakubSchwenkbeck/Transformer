@@ -33,7 +33,7 @@ fn main() {
     let tokenizer = Tokenizer::new(vocab.clone());
     let embedding = Embedding::new(6, 12); // Example vocab size and embedding size
                                            // Input sentence
-    let sentence = "transformer transformer transformer";
+    let sentence = "hello  world model";
 
     // Tokenize and embed the input
     let tokens = tokenizer.tokenize(sentence);
@@ -83,5 +83,5 @@ fn main() {
 
     let predicted_token = transformer_model(sentence, &vocab);
 
-    println!("Predicted Token: {}", predicted_token);
+    println!("Predicted Token: {:?}", predicted_token);
 }
