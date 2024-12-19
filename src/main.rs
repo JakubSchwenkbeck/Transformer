@@ -19,9 +19,6 @@ fn main() {
 
     println!(" \n \n \n ENCODER/DECODER  \n");
 
-
-
-
     let vocab = HashMap::from([
         ("hello".to_string(), 0),
         ("world".to_string(), 1),
@@ -31,11 +28,10 @@ fn main() {
         ("model".to_string(), 5),
     ]);
 
-
     // Initialize Tokenizer and Embedding layer
     let tokenizer = Tokenizer::new(vocab.clone());
     let embedding = Embedding::new(6, 12); // Example vocab size and embedding size
-                                            // Input sentence
+                                           // Input sentence
     let sentence = "transformer transformer transformer";
 
     // Tokenize and embed the input
@@ -83,6 +79,4 @@ fn main() {
     let tokens = embedding.retrieve_tokens(flatten_3d_array(decoded), &vocab);
 
     println!("Tokens: {:?}", tokens);
-
-
 }
