@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use Transformer::data::tokenizer::{example_tokens, Tokenizer};
 use Transformer::example::example;
 use Transformer::layers::feedforward_layer::FeedForwardLayer;
+use Transformer::math::linear_algebra::flatten_3d_array;
 use Transformer::model::decoder::decoding;
 use Transformer::model::embedding::Embedding;
 use Transformer::model::encoder::encoding;
@@ -17,35 +18,35 @@ fn main() {
     example_tokens();
 
     println!(" \n \n \n ENCODER/DECODER  \n");
-    // Example vocabulary
-    let vocab = vec![
-        ("hello".to_string(), 4),
-        ("world".to_string(), 5),
-        ("my".to_string(), 6),
-        ("name".to_string(), 7),
-        ("is".to_string(), 8),
-    ]
-    .into_iter()
-    .collect::<HashMap<String, usize>>();
+
+    let vocab = HashMap::from([
+        ("hello".to_string(), 0),
+        ("world".to_string(), 1),
+        ("rust".to_string(), 2),
+        ("transformer".to_string(), 3),
+        ("learning".to_string(), 4),
+        ("model".to_string(), 5),
+    ]);
 
     // Initialize Tokenizer and Embedding layer
-    let tokenizer = Tokenizer::new(vocab);
-    let embedding = Embedding::new(10, 64); // Example vocab size and embedding size
-                                            // Input sentence
-    let sentence = "hello world";
+    let tokenizer = Tokenizer::new(vocab.clone());
+    let embedding = Embedding::new(6, 12); // Example vocab size and embedding size
+                                           // Input sentence
+    let sentence = "transformer transformer transformer";
 
     // Tokenize and embed the input
     let tokens = tokenizer.tokenize(sentence);
     let embeddings = embedding.forward(tokens.clone());
 
     // Convert embeddings to Array3 (batch_size, seq_length, embed_size)
-    let input_tensor = Array3::from_shape_fn((1, tokens.len(), 64), |(batch, seq, _)| {
+    let input_tensor = Array3::from_shape_fn((1, tokens.len(), 12), |(batch, seq, _)| {
         embeddings[[seq, batch]]
     });
 
+    println!("INPUT : {}", input_tensor.clone());
     // Initialize gamma and beta for layer normalization
-    let gamma = Array2::ones((1, 64)); // Example gamma (scale parameter)
-    let beta = Array2::zeros((1, 64)); // Example beta (shift parameter)
+    let gamma = Array2::ones((1, 12)); // Example gamma (scale parameter)
+    let beta = Array2::zeros((1, 12)); // Example beta (shift parameter)
 
     // Initialize the feed-forward layer with correct types
 
@@ -55,7 +56,7 @@ fn main() {
     // Perform encoding (transformer layer)
     let epsilon = 1e-6; // Small epsilon for numerical stability
     let encoded = encoding(
-        input_tensor,
+        input_tensor.clone(),
         gamma.clone(),
         beta.clone(),
         epsilon,
@@ -63,7 +64,7 @@ fn main() {
     );
     // Perform decoding (transformer layer)
     let decoded = decoding(
-        encoded.clone(),
+        input_tensor,
         encoded.clone(),
         gamma,
         beta,
@@ -74,4 +75,8 @@ fn main() {
     // Print the encoded and decoded output tensors
     println!("Encoded: {:?}", encoded);
     println!("Decoded: {:?}", decoded);
+
+    let tokens = embedding.retrieve_tokens(flatten_3d_array(decoded), &vocab);
+
+    println!("Tokens: {:?}", tokens);
 }

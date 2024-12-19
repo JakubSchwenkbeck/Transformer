@@ -88,3 +88,11 @@ pub fn apply_projection(x: &Array3<f32>, w: &Array2<f32>) -> Array3<f32> {
 
     result
 }
+
+pub fn flatten_3d_array(batch: Array3<f32>) -> Array2<f32> {
+    let (batch_size, seq_length, embed_size) = batch.dim();
+    batch
+        .to_shape((batch_size * seq_length, embed_size))
+        .unwrap()
+        .to_owned()
+}
