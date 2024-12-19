@@ -1,6 +1,6 @@
 // Numerical constants with down scaled real-application values
 #![allow(unused)]
-pub const EPSILON :f32 = 0.0001;
+pub const EPSILON: f32 = 0.0001;
 pub const D_MODEL: usize = 512; // Embedding size
 pub const D_K: usize = 64; // Key/query dimension
 pub const D_V: usize = 64; // Value dimension
