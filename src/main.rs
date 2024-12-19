@@ -7,6 +7,7 @@ use Transformer::math::linear_algebra::flatten_3d_array;
 use Transformer::model::decoder::decoding;
 use Transformer::model::embedding::Embedding;
 use Transformer::model::encoder::encoding;
+use Transformer::model::transformer_model::transformer_model;
 use Transformer::settings::{BATCH_SIZE, DROPOUT_RATE, INPUT_SIZE, OUTPUT_SIZE};
 
 fn main() {
@@ -32,7 +33,7 @@ fn main() {
     let tokenizer = Tokenizer::new(vocab.clone());
     let embedding = Embedding::new(6, 12); // Example vocab size and embedding size
                                            // Input sentence
-    let sentence = "transformer transformer transformer";
+    let sentence = "hello  world model";
 
     // Tokenize and embed the input
     let tokens = tokenizer.tokenize(sentence);
@@ -79,4 +80,8 @@ fn main() {
     let tokens = embedding.retrieve_tokens(flatten_3d_array(decoded), &vocab);
 
     println!("Tokens: {:?}", tokens);
+
+    let predicted_token = transformer_model(sentence, &vocab);
+
+    println!("Predicted Token: {:?}", predicted_token);
 }

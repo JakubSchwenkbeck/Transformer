@@ -7,6 +7,10 @@ pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     let sum: f32 = exp_vec.sum();
     exp_vec / sum
 }
+pub fn softmax_vec(vec: Vec<f32>) -> Array1<f32> {
+    let array = Array1::from(vec); // Convert Vec<f32> to Array1<f32>
+    softmax_vector(array.view())
+}
 
 pub fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
     convert_to_array2(mat.map_axis(Axis(1), softmax_vector))
