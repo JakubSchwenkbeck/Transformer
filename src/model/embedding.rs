@@ -70,34 +70,7 @@ impl Embedding {
         token_embeddings + pos_encodings
     }
 
-    pub fn predict_tokens(
-        probabilities: ArrayView2<f32>,
-        vocab: &HashMap<String, usize>,
-    ) -> Vec<String> {
-        // Reverse the vocab to get a mapping from index to token
-        let index_to_token: HashMap<usize, String> =
-            vocab.iter().map(|(k, &v)| (v, k.clone())).collect();
 
-        let mut predicted_tokens = Vec::new();
-
-        for probs in probabilities.axis_iter(Axis(0)) {
-            // Iterate over the rows (sequence tokens)
-            // Find the index of the maximum probability
-            let max_index = probs
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .unwrap()
-                .0;
-
-            // Map the index to the corresponding token
-            if let Some(token) = index_to_token.get(&max_index) {
-                predicted_tokens.push(token.clone());
-            }
-        }
-
-        predicted_tokens
-    }
 
     pub fn retrieve_tokens(
         &self,
@@ -142,4 +115,32 @@ impl Embedding {
 
 pub fn norm(vector: ArrayView<f32, Ix1>) -> f32 {
     vector.mapv(|x| x * x).sum().sqrt()
+}
+pub fn predict_tokens(
+    probabilities: ArrayView2<f32>,
+    vocab: &HashMap<String, usize>,
+) -> Vec<String> {
+    // Reverse the vocab to get a mapping from index to token
+    let index_to_token: HashMap<usize, String> =
+        vocab.iter().map(|(k, &v)| (v, k.clone())).collect();
+
+    let mut predicted_tokens = Vec::new();
+
+    for probs in probabilities.axis_iter(Axis(0)) {
+        // Iterate over the rows (sequence tokens)
+        // Find the index of the maximum probability
+        let max_index = probs
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .unwrap()
+            .0;
+
+        // Map the index to the corresponding token
+        if let Some(token) = index_to_token.get(&max_index) {
+            predicted_tokens.push(token.clone());
+        }
+    }
+
+    predicted_tokens
 }
