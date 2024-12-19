@@ -10,6 +10,7 @@ pub mod model {
     pub mod decoder;
     pub mod embedding;
     pub mod encoder;
+    pub mod transformer_model;
 }
 
 // this lint makes a scene ....

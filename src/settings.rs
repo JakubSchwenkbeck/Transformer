@@ -7,7 +7,7 @@ pub const D_V: usize = 64; // Value dimension
 pub const NUM_HEADS: usize = 8; // Number of attention heads
 pub const SEQ_LENGTH: usize = 128; // Sequence length
 pub const BATCH_SIZE: usize = 1; // Batch size
-pub const EMBEDDING_SIZE: usize = 6;
+pub const EMBEDDING_SIZE: usize = 12;
 pub const INPUT_SIZE: usize = 12;
 pub const OUTPUT_SIZE: usize = 12;
 
