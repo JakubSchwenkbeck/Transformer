@@ -16,7 +16,7 @@ pub fn layer_norm(
     beta: &Array2<f32>,
     epsilon: f32,
 ) -> Array2<f32> {
-    // Step 1: Calculate mean and variance across the features (axis=1)
+    // Calculate mean and variance across the features (axis=1)
     let mean = x.mean_axis(Axis(1)).unwrap();
     let variance = x.var_axis(Axis(1), 0.0);
     //println!("Mean: {:?}", mean);
@@ -31,9 +31,6 @@ pub fn layer_norm(
     let normalized = (x - &expanded_mean) / (expanded_variance + epsilon).mapv(f32::sqrt);
 
     // println!("Normalized {}", normalized);
-    // Step 2: Normalize the input
-    //let normalized = (x - &reshaped_mean) / (reshaped_variance + epsilon).mapv(f32::sqrt);
 
-    // Step 3: Apply scaling (gamma) and shifting (beta)
     normalized * gamma + beta
 }
