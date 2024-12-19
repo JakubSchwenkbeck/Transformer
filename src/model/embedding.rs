@@ -70,8 +70,6 @@ impl Embedding {
         token_embeddings + pos_encodings
     }
 
-
-
     pub fn retrieve_tokens(
         &self,
         decoded_embeddings: Array2<f32>,

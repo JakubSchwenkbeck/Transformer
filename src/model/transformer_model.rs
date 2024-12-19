@@ -1,4 +1,5 @@
 #![allow(warnings)]
+use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::flatten_3d_array;
@@ -7,9 +8,8 @@ use crate::model::embedding::{predict_tokens, Embedding};
 use crate::model::encoder::encoding;
 use crate::settings::*;
 use ndarray::{Array1, Array2, Array3};
-use std::collections::HashMap;
 use rand::Rng;
-use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
+use std::collections::HashMap;
 
 pub fn transformer_model(
     sentence: &str,                 // Input sentence
@@ -65,5 +65,4 @@ pub fn transformer_model(
 
     // Convert probabilities back to text using the tokenizer
     predict_tokens(probabilities.view(), vocab)
-
 }
