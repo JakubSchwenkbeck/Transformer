@@ -19,18 +19,18 @@ pub fn layer_norm(
     // Step 1: Calculate mean and variance across the features (axis=1)
     let mean = x.mean_axis(Axis(1)).unwrap();
     let variance = x.var_axis(Axis(1), 0.0);
-    println!("Mean: {:?}", mean);
-    println!("Variance: {:?}", variance);
+    //println!("Mean: {:?}", mean);
+    // println!("Variance: {:?}", variance);
 
     let expanded_mean = mean.insert_axis(Axis(1)); // Expands [6] to [6, 1]
     let expanded_variance = variance.insert_axis(Axis(1)); // Expands [6] to [6, 1]
-    println!("EXPMean: {:?}", expanded_mean);
-    println!("EXPVariance: {:?}", expanded_variance);
+                                                           // println!("EXPMean: {:?}", expanded_mean);
+                                                           //println!("EXPVariance: {:?}", expanded_variance);
 
     // Add epsilon to expanded variance
     let normalized = (x - &expanded_mean) / (expanded_variance + epsilon).mapv(f32::sqrt);
 
-    println!("Normalized {}", normalized);
+    // println!("Normalized {}", normalized);
     // Step 2: Normalize the input
     //let normalized = (x - &reshaped_mean) / (reshaped_variance + epsilon).mapv(f32::sqrt);
 

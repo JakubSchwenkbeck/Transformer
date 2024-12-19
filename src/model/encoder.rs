@@ -41,7 +41,7 @@ pub fn encoding(
         dummy_learned_matrices.clone(), // W_O
     );
 
-    println!("Attention1 :{}", attention_output);
+    //println!("Attention1 :{}", attention_output);
     // Add & Normalize (Residual Connection + Layer Norm)
     let attention_residual = attention_output.add(&input); // Residual connection
     let reshaped_attention = attention_residual
@@ -60,7 +60,7 @@ pub fn encoding(
     // Feed-Forward Network
     let feed_forward_output = feed_forward_layer.forward(attention_norm.clone());
 
-    println!("feed_forward_output :{:?}", feed_forward_output);
+    //println!("feed_forward_output :{:?}", feed_forward_output);
     //  Add & Normalize (Residual Connection + Layer Norm)
     let feed_forward_residual = feed_forward_output.add(&attention_norm); // Residual connection
     let reshaped_ff_attention = feed_forward_residual
