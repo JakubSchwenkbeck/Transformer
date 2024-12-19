@@ -20,7 +20,7 @@ pub fn decoding(
     let d_model = input.shape()[2];
 
     // Self-Attention (Masked Multi-Head Attention in the Decoder)
-    let dummy_learned_matrices = Array2::<f32>::zeros((d_model, d_model)); // Replace with actual learned parameters
+    let dummy_learned_matrices = Array2::<f32>::ones((d_model, d_model)); // Replace with actual learned parameters
     let attention_output = multi_head_attention(
         input.clone(),                  // Q
         input.clone(),                  // K
