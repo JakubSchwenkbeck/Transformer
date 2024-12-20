@@ -19,10 +19,14 @@ use std::ops::Add;
 /// # Returns:
 /// - Output tensor of shape (batch_size, seq_length, d_model) after passing through the encoder layer.
 
+#[requires(input.shape().len() == 3, "Input tensor must have 3 dimensions (batch_size, seq_length, embed_size)")]
 #[requires(input.shape()[2] == gamma.shape()[1], "Gamma dimensions do not match input feature size")]
+#[requires(gamma.shape()[0] == 1, "Gamma must have exactly one row")]
 #[requires(input.shape()[2] == beta.shape()[1], "Beta dimensions do not match input feature size")]
+#[requires(beta.shape()[0] == 1, "Beta must have exactly one row")]
 #[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
 #[requires(feed_forward_layer.is_initialized(), "Feed-forward layer is not properly initialized")]
+#[requires(input.shape()[1] > 0, "Sequence length must be greater than zero")]
 pub fn encoding(
     input: Array3<f32>,                    // Input tensor
     gamma: Array2<f32>,                    // Scale parameter for layer norm
