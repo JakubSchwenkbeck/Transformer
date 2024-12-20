@@ -1,6 +1,5 @@
 #![allow(warnings)]
 use crate::attention::multihead_attention::multi_head_attention;
-use crate::attention::softmax::softmax_3d;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::model::encoder::encoding;

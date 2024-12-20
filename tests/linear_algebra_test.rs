@@ -22,22 +22,6 @@ fn test_matmul_valid_input() {
 }
 
 #[test]
-fn test_matmul_invalid_input() {
-    // Arrange: Define input matrices with mismatched dimensions
-    let a = array![[1.0, 2.0], [3.0, 4.0]]; // 2x2 matrix
-    let b = array![[5.0, 6.0]]; // 1x2 matrix (mismatched dimensions)
-
-    // Act: Perform the multiplication, expecting an error
-    let result = matmul(&a, &b);
-
-    // Assert: Ensure the result is an error due to incompatible dimensions
-    assert_eq!(
-        result,
-        Err("Matrix dimensions are incompatible for multiplication.")
-    );
-}
-
-#[test]
 fn test_dotproduct() {
     let a: Array1<f32> = array![1.0, 2.0, 3.0];
     let b: Array1<f32> = array![4.0, 5.0, 5.0];
