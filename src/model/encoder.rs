@@ -3,7 +3,7 @@ use crate::attention::multihead_attention::multi_head_attention;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
-use contracts::requires;
+use contracts::{ensures, requires};
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
 
