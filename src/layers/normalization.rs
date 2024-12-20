@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+use contracts::{ensures, requires};
 use ndarray::{Array2, Axis};
 
 /// Performs layer normalization on a 2D array (batch size x embedding size).
@@ -10,6 +12,12 @@ use ndarray::{Array2, Axis};
 ///
 /// # Returns:
 /// A 2D array of the same shape as `x` after applying Layer Normalization.
+#[requires(x.shape().len() == 2, "Input array must be 2-dimensional")]
+#[requires(gamma.shape().len() == 2 && gamma.shape()[0] == 1, "Gamma must be a 2-dimensional array with a single row")]
+#[requires(beta.shape().len() == 2 && beta.shape()[0] == 1, "Beta must be a 2-dimensional array with a single row")]
+#[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
+#[ensures(ret.shape() == x.shape(), "The resulting array must have the same shape as the input array")]
+#[ensures(ret.iter().all(|&x| x.is_finite()), "All elements in the resulting array must be finite")]
 pub fn layer_norm(
     x: &Array2<f32>,
     gamma: &Array2<f32>,
@@ -19,18 +27,12 @@ pub fn layer_norm(
     // Calculate mean and variance across the features (axis=1)
     let mean = x.mean_axis(Axis(1)).unwrap();
     let variance = x.var_axis(Axis(1), 0.0);
-    //println!("Mean: {:?}", mean);
-    // println!("Variance: {:?}", variance);
 
     let expanded_mean = mean.insert_axis(Axis(1)); // Expands [6] to [6, 1]
     let expanded_variance = variance.insert_axis(Axis(1)); // Expands [6] to [6, 1]
-                                                           // println!("EXPMean: {:?}", expanded_mean);
-                                                           //println!("EXPVariance: {:?}", expanded_variance);
 
     // Add epsilon to expanded variance
     let normalized = (x - &expanded_mean) / (expanded_variance + epsilon).mapv(f32::sqrt);
-
-    // println!("Normalized {}", normalized);
 
     normalized * gamma + beta
 }

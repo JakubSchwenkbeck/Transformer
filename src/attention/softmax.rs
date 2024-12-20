@@ -1,20 +1,30 @@
-#![allow(unused_imports)] // {array} import is not recognized as it is used in #[test]
+#![allow(unused_imports)]
+
+use contracts::{ensures, requires};
+// {array} import is not recognized as it is used in #[test]
 use ndarray::{array, s, Array, Array1, Array2, Array3, ArrayView1, Axis};
 
+//noinspection ALL
+#[requires(!vec.is_empty(), "Input vector must not be empty.")]
+#[ensures(ret.len() == vec.len(), "Output vector must have the same length as the input vector.")]
 pub fn softmax_vector(vec: ArrayView1<f32>) -> Array1<f32> {
     let max = vec.fold(f32::NEG_INFINITY, |a, &b| a.max(b)); // Stabilize by subtracting max
     let exp_vec = vec.mapv(|x| (x - max).exp());
     let sum: f32 = exp_vec.sum();
     exp_vec / sum
 }
+#[requires(!vec.is_empty(), "Input vector must not be empty.")]
 pub fn softmax_vec(vec: Vec<f32>) -> Array1<f32> {
     let array = Array1::from(vec); // Convert Vec<f32> to Array1<f32>
     softmax_vector(array.view())
 }
 
+#[requires(mat.shape().len() == 2, "Input matrix must be 2-dimensional.")]
 pub fn softmax_matrix(mat: &Array2<f32>) -> Array2<f32> {
     convert_to_array2(mat.map_axis(Axis(1), softmax_vector))
 }
+
+#[requires(attention_scores.shape().len() == 3, "Input tensor must be 3-dimensional.")]
 pub fn softmax_3d(attention_scores: &Array3<f32>) -> Array3<f32> {
     let batch_size = attention_scores.shape()[0];
     let mut softmax_result = Array3::<f32>::zeros(attention_scores.raw_dim());
@@ -33,7 +43,8 @@ pub fn softmax_3d(attention_scores: &Array3<f32>) -> Array3<f32> {
 
     softmax_result
 }
-
+#[requires(!array1d.is_empty(), "Input array must not be empty.")]
+#[requires(array1d.iter().all(|row| !row.is_empty()), "All rows must be non-empty.")]
 fn convert_to_array2(array1d: Array<Array1<f32>, ndarray::Ix1>) -> Array2<f32> {
     // Check if the input array is non-empty
     assert!(!array1d.is_empty(), "Input array must not be empty.");

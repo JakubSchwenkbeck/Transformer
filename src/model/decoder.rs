@@ -1,12 +1,22 @@
 #![allow(warnings)]
 use crate::attention::multihead_attention::multi_head_attention;
-use crate::attention::softmax::softmax_3d;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::model::encoder::encoding;
+use contracts::requires;
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
 
+#[requires(input.shape().len() == 3, "Input tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
+#[requires(encoder_output.shape().len() == 3, "Encoder output tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
+#[requires(input.shape() == encoder_output.shape(), "Input tensor and encoder output tensor must have the same shape")]
+#[requires(input.shape()[2] == gamma.shape()[1], "Gamma dimensions do not match input feature size")]
+#[requires(gamma.shape()[0] == 1, "Gamma must have exactly one row")]
+#[requires(input.shape()[2] == beta.shape()[1], "Beta dimensions do not match input feature size")]
+#[requires(beta.shape()[0] == 1, "Beta must have exactly one row")]
+#[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
+#[requires(feed_forward_layer.is_initialized(), "Feed-forward layer is not properly initialized")]
+#[requires(input.shape()[1] > 0, "Sequence length must be greater than zero")]
 pub fn decoding(
     input: Array3<f32>, // Input tensor (usually from the previous decoder layer or initial input)
     encoder_output: Array3<f32>, // Encoder output (for the encoder-decoder attention)
@@ -87,6 +97,7 @@ pub fn decoding(
 
     ff_norm // decoder ouput
 }
+
 #[test]
 fn test_decoding() {
     // Dummy input tensor (batch_size = 2, seq_length = 4, d_model = 4)
@@ -121,7 +132,6 @@ fn test_decoding() {
     );
 
     // Call the decoding function
-
     let output = decoding(input, enc_out, gamma, beta, epsilon, &feed_forward_layer);
 
     // Assert that the output has the correct shape
