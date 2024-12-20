@@ -1,6 +1,7 @@
+#![allow(unused_imports)]
 use crate::activation::activation_functions::gelu;
 use contracts::requires;
-use ndarray::{Array1, Array2, Array3};
+use ndarray::{array, Array1, Array2, Array3};
 use rand::Rng;
 use std::ops::Add;
 
@@ -154,4 +155,48 @@ fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
 /// Initializes bias vectors with zeros.
 fn bias_initialization(size: usize) -> Array1<f32> {
     Array1::zeros(size)
+}
+
+#[test]
+fn test_bias_initialization() {
+    let size = 5;
+
+    let bias = bias_initialization(size);
+
+    // Check that the dimensions are correct (size x 1)
+    assert_eq!(bias.shape(), &[size,]);
+
+    // Check that all values in the bias array are 0.0
+    for &value in bias.iter() {
+        assert_eq!(value, 0.0);
+    }
+}
+
+#[test]
+fn test_feedforward_forward() {
+    // Define a dummy input with shape (batch_size, seq_length, d_model)
+    let input = array![
+        [
+            [0.1, 0.2, 0.3, 0.4],
+            [0.5, 0.6, 0.7, 0.8],
+            [0.9, 1.0, 1.1, 1.2],
+        ],
+        [
+            [1.3, 1.4, 1.5, 1.6],
+            [1.7, 1.8, 1.9, 2.0],
+            [2.1, 2.2, 2.3, 2.4],
+        ]
+    ];
+
+    // Create a FeedForwardLayer instance
+    let feed_forward_layer = FeedForwardLayer::new(2, 4, 4, 0.1);
+
+    // Feed forward through the layer
+    let feed_forward_output = feed_forward_layer.forward(input.clone());
+
+    // Assert the output shape
+    assert_eq!(feed_forward_output.shape(), &[2, 3, 4]);
+
+    // Optionally, check if the output is transformed (e.g., not equal to input)
+    assert!(!feed_forward_output.iter().eq(input.iter())); // Check if output is different from input
 }
