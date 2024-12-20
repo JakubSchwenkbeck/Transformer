@@ -1,3 +1,6 @@
+#![allow(warnings)]
+use contracts::{ensures, requires};
+
 /// Computes the sinusoidal positional encoding for a given position and dimension.
 ///
 /// This encoding is used in Transformer models to represent token positions
@@ -10,10 +13,12 @@
 ///
 /// # Returns
 /// The positional encoding value (as `f32`).
+#[requires(embedding_size > 0, "Embedding size must be greater than 0")]
+#[ensures(ret.is_finite(), "The resulting value must be finite")]
 pub fn sinusoidal_pos_encoding(pos: usize, index: usize, embedding_size: usize) -> f32 {
     if pos == 0 {
         return 0.0;
-    };
+    }
     let divisor = 10000f32.powf(2.0 * (index as f32 / embedding_size as f32)); // 100000^(2*i / embedding size)
 
     if index % 2 == 0 {
