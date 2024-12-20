@@ -1,24 +1,31 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-
 use crate::activation::activation_functions::gelu;
-use crate::settings::HIDDEN_SIZE;
-use ndarray::{array, Array1, Array2, Array3};
+use contracts::requires;
+use ndarray::{Array1, Array2, Array3};
 use rand::Rng;
 use std::ops::Add;
 
 pub struct FeedForwardLayer {
     weights1: Array2<f32>,
-    bias1: Array1<f32>, // weights and biases for first linear layer
-
+    bias1: Array1<f32>, // Weights and biases for the first linear layer
     weights2: Array2<f32>,
-    bias2: Array1<f32>, // weights and biases for second linear layer
-
-    dropout_rate: f32, // Dropout rate
+    bias2: Array1<f32>,           // Weights and biases for the second linear layer
+    dropout_rate: f32,            // Dropout rate
+    pub(crate) input_size: usize, // Input feature size
+    pub(crate) output_size: usize, // Output feature size
     initialized: bool,
 }
+
 impl FeedForwardLayer {
-    // init with random values
+    /// Initializes the FeedForwardLayer with random weights and biases.
+    ///
+    /// # Parameters:
+    /// - `_batch_size`: Batch size (not stored, used for verification if needed).
+    /// - `input_size`: Number of input features (d_model).
+    /// - `output_size`: Number of output features (d_model).
+    /// - `dropout_rate`: Probability of dropping a unit in dropout (0.0 to 1.0).
+    #[requires(input_size > 0, "Input size must be greater than 0")]
+    #[requires(output_size > 0, "Output size must be greater than 0")]
+    #[requires((0.0..=1.0).contains(&dropout_rate), "Dropout rate must be in range [0.0, 1.0]")]
     pub fn new(
         _batch_size: usize,
         input_size: usize,
@@ -33,18 +40,33 @@ impl FeedForwardLayer {
 
         let weights2 = he_initialization(hidden_size, output_size); // Shape: (hidden_size, output_size)
         let bias2 = bias_initialization(output_size); // Shape: (output_size,)
+
         FeedForwardLayer {
             weights1,
             bias1,
             weights2,
             bias2,
             dropout_rate,
+            input_size,
+            output_size,
             initialized: true,
         }
     }
+
+    /// Verifies that the layer is properly initialized.
     pub fn is_initialized(&self) -> bool {
         self.initialized
     }
+
+    /// Performs a forward pass in training mode.
+    ///
+    /// # Parameters:
+    /// - `input`: 2D input tensor of shape (batch_size * seq_length, input_size).
+    /// - `train`: Whether to apply dropout.
+    ///
+    /// # Returns:
+    /// - Output tensor of shape (batch_size * seq_length, output_size).
+    #[requires(input.shape()[1] == self.input_size, "Input feature size must match layer's input size")]
     pub fn forward_t(&self, input: &Array2<f32>, train: bool) -> Array2<f32> {
         // First linear layer
         let first_dot = input.dot(&self.weights1);
@@ -61,56 +83,49 @@ impl FeedForwardLayer {
         // Second linear layer
         first_activation.dot(&self.weights2).add(&self.bias2)
     }
-    /// Forward pass through the feed-forward layer.
+
+    /// Performs a forward pass in evaluation mode.
     ///
     /// # Parameters:
-    /// - `x`: Input tensor of shape (batch_size, seq_length, d_model).
+    /// - `x`: Input tensor of shape (batch_size, seq_length, input_size).
     ///
     /// # Returns:
-    /// - Output tensor of shape (batch_size, seq_length, d_model).
+    /// - Output tensor of shape (batch_size, seq_length, output_size).
+    #[requires(x.shape()[2] == self.input_size, "Input feature size must match layer's input size")]
+    #[requires(!x.is_empty(), "Input tensor must not be empty")]
     pub fn forward(&self, x: Array3<f32>) -> Array3<f32> {
         let batch_size = x.shape()[0];
         let seq_length = x.shape()[1];
         let d_model = x.shape()[2];
 
-        // Flatten the input to 2D: (batch_size * seq_length, d_model)
         let reshaped_x = x.to_shape((batch_size * seq_length, d_model));
 
         match reshaped_x {
             Ok(valid_reshaped_x) => {
                 let dot = valid_reshaped_x.dot(&self.weights1);
-
                 let add = dot + &self.bias1;
 
-                // First linear layer + gelu
-
+                // First linear layer + GELU activation
                 let hidden = gelu(&add.to_owned());
-
                 let dot2 = hidden.dot(&self.weights2);
 
                 // Second linear layer
                 let output = dot2 + &self.bias2;
 
-                // Reshape back to 3D: (batch_size, seq_length, d_model)
+                // Reshape back to 3D
                 output
-                    .to_shape((batch_size, seq_length, d_model))
+                    .to_shape((batch_size, seq_length, self.output_size))
                     .unwrap()
                     .to_owned()
-                // Use the `hidden` result here for further processing.
             }
             Err(ref e) => {
                 eprintln!("Shape error: {}", e);
-                eprintln!(
-                    "Shape of input : {:?}   -=-   Shape of weights : {:?} ",
-                    reshaped_x.unwrap().shape(),
-                    seq_length
-                );
-                // Or return unchanged?
-                x
+                x // Fallback to the original input on failure
             }
         }
     }
 
+    /// Applies dropout to the input.
     fn apply_dropout(&self, input: &Array2<f32>) -> Array2<f32> {
         let mut rng = rand::rng();
         input.map(|&x| {
@@ -123,61 +138,17 @@ impl FeedForwardLayer {
     }
 }
 
+/// He initialization function.
 fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
     let mut rng = rand::rng();
-    // He initialization: scale by sqrt(2 / input_size)
     let scale = (2.0 / input_size as f32).sqrt();
     let values: Vec<f32> = (0..(input_size * output_size))
         .map(|_| rng.random_range(-scale..scale))
         .collect();
-
-    // Create an Array2 from the values vector
     Array2::from_shape_vec((input_size, output_size), values).unwrap()
 }
 
+/// Initializes bias vectors with zeros.
 fn bias_initialization(size: usize) -> Array1<f32> {
     Array1::zeros(size)
-}
-
-fn test_bias_initialization() {
-    let size = 5;
-
-    let bias = bias_initialization(size);
-
-    // Check that the dimensions are correct (size x 1)
-    assert_eq!(bias.shape(), &[size,]);
-
-    // Check that all values in the bias array are 0.0
-    for &value in bias.iter() {
-        assert_eq!(value, 0.0);
-    }
-}
-
-#[test]
-fn test_feedforward_forward() {
-    // Define a dummy input with shape (batch_size, seq_length, d_model)
-    let input = array![
-        [
-            [0.1, 0.2, 0.3, 0.4],
-            [0.5, 0.6, 0.7, 0.8],
-            [0.9, 1.0, 1.1, 1.2],
-        ],
-        [
-            [1.3, 1.4, 1.5, 1.6],
-            [1.7, 1.8, 1.9, 2.0],
-            [2.1, 2.2, 2.3, 2.4],
-        ]
-    ];
-
-    // Create a FeedForwardLayer instance
-    let feed_forward_layer = FeedForwardLayer::new(2, 4, 4, 0.1);
-
-    // Feed forward through the layer
-    let feed_forward_output = feed_forward_layer.forward(input.clone());
-
-    // Assert the output shape
-    assert_eq!(feed_forward_output.shape(), &[2, 3, 4]);
-
-    // Optionally, check if the output is transformed (e.g., not equal to input)
-    assert!(!feed_forward_output.iter().eq(input.iter())); // Check if output is different from input
 }

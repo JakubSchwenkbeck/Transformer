@@ -3,7 +3,7 @@ use crate::attention::multihead_attention::multi_head_attention;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
-use contracts::{debug_requires, requires};
+use contracts::requires;
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
 
@@ -27,6 +27,8 @@ use std::ops::Add;
 #[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
 #[requires(feed_forward_layer.is_initialized(), "Feed-forward layer is not properly initialized")]
 #[requires(input.shape()[1] > 0, "Sequence length must be greater than zero")]
+#[requires(feed_forward_layer.input_size == input.shape()[2], "Feed-forward layer input size must match embedding size")]
+#[requires(feed_forward_layer.output_size == input.shape()[2], "Feed-forward layer output size must match embedding size")]
 pub fn encoding(
     input: Array3<f32>,                    // Input tensor
     gamma: Array2<f32>,                    // Scale parameter for layer norm
@@ -37,6 +39,24 @@ pub fn encoding(
     let batch_size = input.shape()[0];
     let seq_length = input.shape()[1];
     let d_model = input.shape()[2];
+    assert_eq!(
+        gamma.shape()[1],
+        d_model,
+        "Gamma dimensions do not match input feature size"
+    );
+    assert_eq!(gamma.shape()[0], 1, "Gamma must have exactly one row");
+    assert_eq!(
+        beta.shape()[1],
+        d_model,
+        "Beta dimensions do not match input feature size"
+    );
+    assert_eq!(beta.shape()[0], 1, "Beta must have exactly one row");
+    assert!(epsilon > 0.0, "Epsilon must be positive and non-zero");
+    assert!(
+        feed_forward_layer.is_initialized(),
+        "Feed-forward layer is not properly initialized"
+    );
+    assert!(seq_length > 0, "Sequence length must be greater than zero");
 
     // Multi-Head Attention
     let dummy_learned_matrices = Array2::<f32>::ones((d_model, d_model)); // Replace with actual learned parameters
@@ -52,7 +72,6 @@ pub fn encoding(
         dummy_learned_matrices.clone(), // W_O
     );
 
-    //println!("Attention1 :{}", attention_output);
     // Add & Normalize (Residual Connection + Layer Norm)
     let attention_residual = attention_output.add(&input); // Residual connection
     let reshaped_attention = attention_residual
@@ -71,8 +90,7 @@ pub fn encoding(
     // Feed-Forward Network
     let feed_forward_output = feed_forward_layer.forward(attention_norm.clone());
 
-    //println!("feed_forward_output :{:?}", feed_forward_output);
-    //  Add & Normalize (Residual Connection + Layer Norm)
+    // Add & Normalize (Residual Connection + Layer Norm)
     let feed_forward_residual = feed_forward_output.add(&attention_norm); // Residual connection
     let reshaped_ff_attention = feed_forward_residual
         .to_shape((batch_size * seq_length, d_model)) // Flatten to 2D
@@ -87,8 +105,15 @@ pub fn encoding(
     .unwrap()
     .to_owned();
 
+    assert_eq!(
+        output.shape(),
+        input.shape(),
+        "Output tensor must have the same shape as the input tensor"
+    );
+
     output
 }
+
 #[test]
 fn test_encoding() {
     // Dummy input tensor (batch_size = 2, seq_length = 3, d_model = 4)
@@ -114,7 +139,7 @@ fn test_encoding() {
 
     // Call the encoding function
     let epsilon = 1e-6;
-    let output = encoding(input, gamma, beta, epsilon, &feed_forward_layer);
+    let output = encoding(input.clone(), gamma, beta, epsilon, &feed_forward_layer);
 
     // Assert that the output has the correct shape
     assert_eq!(output.shape(), &[2, 3, 4]);
