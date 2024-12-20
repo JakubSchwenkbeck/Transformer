@@ -67,6 +67,8 @@ impl FeedForwardLayer {
     /// # Returns:
     /// - Output tensor of shape (batch_size * seq_length, output_size).
     #[requires(input.shape()[1] == self.input_size, "Input feature size must match layer's input size")]
+    #[requires(input.shape()[0] > 0, "Input tensor must not be empty")]
+    #[requires(input.shape()[1] == self.input_size, "Input tensor's second dimension must match input_size")]
     pub fn forward_t(&self, input: &Array2<f32>, train: bool) -> Array2<f32> {
         // First linear layer
         let first_dot = input.dot(&self.weights1);
@@ -92,7 +94,8 @@ impl FeedForwardLayer {
     /// # Returns:
     /// - Output tensor of shape (batch_size, seq_length, output_size).
     #[requires(x.shape()[2] == self.input_size, "Input feature size must match layer's input size")]
-    #[requires(!x.is_empty(), "Input tensor must not be empty")]
+    #[requires(x.shape()[0] > 0, "Input tensor must not be empty")]
+    #[requires(x.shape()[2] == self.input_size, "Input tensor's third dimension must match input_size")]
     pub fn forward(&self, x: Array3<f32>) -> Array3<f32> {
         let batch_size = x.shape()[0];
         let seq_length = x.shape()[1];
