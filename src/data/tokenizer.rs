@@ -50,10 +50,14 @@ impl Tokenizer {
         let mut tokens: Vec<usize> = vec![self.vocab[&self.sos_token]]; // Start with SOS token
 
         for word in words {
-            let token = self
-                .vocab
-                .get(&word)
-                .unwrap_or(&self.vocab[&self.unk_token]);
+            let word_lower = word.to_lowercase(); // Convert to lowercase
+            let token = self.vocab.get(&word_lower).unwrap_or_else(|| {
+                eprintln!(
+                    "Warning: Word '{}' not in vocabulary, substituting <UNK>",
+                    word
+                );
+                &self.vocab[&self.unk_token]
+            });
             tokens.push(*token);
         }
 
@@ -71,12 +75,46 @@ impl Tokenizer {
             .join(" ")
     }
 
-    // Helper function to split sentence into words using a simple regex
+    // Helper function to split sentence into words using an improved regex
     fn tokenize_sentence(&self, sentence: &str) -> Vec<String> {
-        let re = Regex::new(r"\w+").unwrap(); // Matches words (letters and numbers)
+        let re = Regex::new(r"\w+|[^\w\s]").unwrap(); // Matches words or punctuation
         re.find_iter(sentence)
             .map(|mat| mat.as_str().to_string())
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokenizer() {
+        let vocab = vec![
+            ("hello".to_string(), 4),
+            ("world".to_string(), 5),
+            ("my".to_string(), 6),
+        ]
+        .into_iter()
+        .collect::<HashMap<String, usize>>();
+
+        let tokenizer = Tokenizer::new(vocab);
+
+        // Empty sentence
+        let tokens = tokenizer.tokenize("");
+        assert_eq!(tokens, vec![1, 2]); // <SOS>, <EOS>
+
+        // Sentence with OOV words
+        let tokens = tokenizer.tokenize("hello unknown");
+        assert_eq!(tokens, vec![1, 4, 3, 2]); // <SOS>, "hello", <UNK>, <EOS>
+
+        // Sentence with punctuation
+        let tokens = tokenizer.tokenize("hello, world!");
+        assert_eq!(tokens, vec![1, 4, 3, 5, 3, 2]); // <SOS>, "hello", <UNK>, "world", <EOS>
+
+        // Detokenization
+        let decoded_sentence = tokenizer.detokenize(tokens.clone());
+        assert_eq!(decoded_sentence, "<SOS> hello <UNK> world <UNK> <EOS>");
     }
 }
 
@@ -96,7 +134,7 @@ pub fn example_tokens() {
     let tokenizer = Tokenizer::new(vocab);
 
     // Example sentence
-    let sentence = "hello world";
+    let sentence = "Hello, world! My name is ChatGPT.";
 
     // Tokenize the sentence
     let tokens = tokenizer.tokenize(sentence);
@@ -104,5 +142,5 @@ pub fn example_tokens() {
 
     // Detokenize the sentence
     let decoded_sentence = tokenizer.detokenize(tokens);
-    println!("Decoded Sentence: {}", decoded_sentence); // Should print "hello world"
+    println!("Decoded Sentence: {}", decoded_sentence); // Should print the sequence with special tokens
 }
