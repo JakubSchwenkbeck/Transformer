@@ -3,6 +3,9 @@
 pub mod example;
 pub mod settings;
 
+pub mod training {
+    pub mod loss_function;
+}
 pub mod data {
     pub mod dataset;
     pub mod generation;
