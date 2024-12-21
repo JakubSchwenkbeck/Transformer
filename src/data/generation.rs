@@ -1,7 +1,7 @@
 use crate::data::io::get_input;
 use crate::data::tokenizer::Tokenizer;
 
-fn generate_input_target_pairs(
+pub fn generate_input_target_pairs(
     tokenizer: &Tokenizer,
     sentences: Vec<String>,
 ) -> Vec<(Vec<usize>, Vec<usize>)> {
@@ -81,7 +81,7 @@ pub fn example_gen() {
         }
     }
 }
-fn generate_staircase_pairs(input: &[usize], target: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
+pub fn generate_staircase_pairs(input: &[usize], target: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
     let mut staircase_pairs = Vec::new();
 
     // The number of steps will be the length of the target sequence

@@ -1,7 +1,7 @@
 use Transformer::data::generation::example_gen;
 use Transformer::data::tokenizer::Tokenizer;
 use Transformer::example::example;
-
+use Transformer::model::train_transformer::train;
 use Transformer::model::transformer_model::transformer_model;
 fn main() {
     println!("runs successfully!");
@@ -75,4 +75,6 @@ fn main() {
     println!("Predicted Token: {:?}", predicted_token);
 
     example_gen();
+
+    train()
 }

@@ -5,6 +5,7 @@ pub mod settings;
 
 pub mod training {
     pub mod loss_function;
+    pub mod train;
 }
 pub mod data {
     pub mod dataset;
@@ -18,6 +19,7 @@ pub mod model {
     pub mod embedding;
     pub mod encoder;
     pub mod transformer_model;
+    pub mod train_transformer;
 }
 
 // this lint makes a scene ....
