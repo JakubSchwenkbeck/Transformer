@@ -12,12 +12,12 @@ use rand::Rng;
 use std::collections::HashMap;
 
 pub fn transformer_model(
-    sentence: &str,                 // Input sentence
-    vocab: &HashMap<String, usize>, // Vocabulary
+    sentence: &str,       // Input sentence
+    tokenizer: Tokenizer, // Vocabulary
 ) -> Vec<String> {
     // Initialize Tokenizer and Embedding layer
-    let tokenizer = Tokenizer::new(vocab.clone());
-    let embedding = Embedding::new(vocab.len(), EMBEDDING_SIZE); // Initialize embedding layer
+
+    let embedding = Embedding::new(tokenizer.vocab.len(), EMBEDDING_SIZE); // Initialize embedding layer
 
     // Tokenize and embed the input sentence
     let tokens = tokenizer.tokenize(sentence);
@@ -63,12 +63,12 @@ pub fn transformer_model(
     }
 
     // Apply final linear transformation
-    let output_projection = Array2::ones((OUTPUT_SIZE, vocab.len())); // All ones weights
+    let output_projection = Array2::ones((OUTPUT_SIZE, tokenizer.vocab.len())); // All ones weights
     let logits = flatten_3d_array(decoded).dot(&output_projection); // Linear layer
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
 
     // Convert probabilities back to text using the tokenizer
-    predict_tokens(probabilities.view(), vocab)
+    predict_tokens(probabilities.view(), &tokenizer.vocab)
 }
