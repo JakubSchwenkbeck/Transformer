@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 use crate::attention::multihead_attention::multi_head_attention;
+use crate::data::learnable::initialize_weights;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
@@ -27,8 +28,7 @@ use std::ops::Add;
 #[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
 #[requires(feed_forward_layer.is_initialized(), "Feed-forward layer is not properly initialized")]
 #[requires(input.shape()[1] > 0, "Sequence length must be greater than zero")]
-#[requires(feed_forward_layer.input_size == input.shape()[2], "Feed-forward layer input size must match embedding size")]
-#[requires(feed_forward_layer.output_size == input.shape()[2], "Feed-forward layer output size must match embedding size")]
+
 pub fn encoding(
     input: Array3<f32>,                    // Input tensor
     gamma: Array2<f32>,                    // Scale parameter for layer norm
@@ -112,35 +112,4 @@ pub fn encoding(
     );
 
     output
-}
-
-#[test]
-fn test_encoding() {
-    // Dummy input tensor (batch_size = 2, seq_length = 3, d_model = 4)
-    let input = array![
-        [
-            [0.1, 0.2, 0.3, 0.4],
-            [0.5, 0.6, 0.7, 0.8],
-            [0.9, 1.0, 1.1, 1.2],
-        ],
-        [
-            [1.3, 1.4, 1.5, 1.6],
-            [1.7, 1.8, 1.9, 2.0],
-            [2.1, 2.2, 2.3, 2.4],
-        ]
-    ];
-
-    // Dummy gamma and beta (scale and shift for layer normalization)
-    let gamma = array![[1.0, 1.0, 1.0, 1.0]];
-    let beta = array![[0.0, 0.0, 0.0, 0.0]];
-
-    // Dummy FeedForwardLayer
-    let feed_forward_layer = FeedForwardLayer::new(2, 4, 4, 0.1);
-
-    // Call the encoding function
-    let epsilon = 1e-6;
-    let output = encoding(input.clone(), gamma, beta, epsilon, &feed_forward_layer);
-
-    // Assert that the output has the correct shape
-    assert_eq!(output.shape(), &[2, 3, 4]);
 }

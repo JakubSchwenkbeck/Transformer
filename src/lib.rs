@@ -4,6 +4,10 @@ pub mod example;
 pub mod settings;
 
 pub mod data {
+    pub mod dataset;
+    pub mod generation;
+    pub mod io;
+    pub mod learnable;
     pub mod tokenizer;
 }
 pub mod model {

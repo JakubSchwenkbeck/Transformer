@@ -1,11 +1,11 @@
 #![allow(warnings)]
 
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct Tokenizer {
-    vocab: HashMap<String, usize>,
+    pub vocab: HashMap<String, usize>,
     reverse_vocab: HashMap<usize, String>,
     pad_token: String,
     sos_token: String,
@@ -14,7 +14,10 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new(vocab: HashMap<String, usize>) -> Self {
+    pub fn new(input: Vec<String>) -> Self {
+        let vocab: HashMap<String, usize> = generate_vocab(input);
+        println!("size : {:?}", vocab.clone().len());
+
         // Define special tokens
         let pad_token = "<PAD>".to_string();
         let sos_token = "<SOS>".to_string();
@@ -46,14 +49,18 @@ impl Tokenizer {
 
     // Tokenize input sentence (word-based tokenization)
     pub fn tokenize(&self, sentence: &str) -> Vec<usize> {
-        let words = self.tokenize_sentence(sentence);
+        let words = tokenize_sentence(sentence);
         let mut tokens: Vec<usize> = vec![self.vocab[&self.sos_token]]; // Start with SOS token
 
         for word in words {
-            let token = self
-                .vocab
-                .get(&word)
-                .unwrap_or(&self.vocab[&self.unk_token]);
+            let word_lower = word.to_lowercase(); // Convert to lowercase
+            let token = self.vocab.get(&word_lower).unwrap_or_else(|| {
+                eprintln!(
+                    "Warning: Word '{}' not in vocabulary, substituting <UNK>",
+                    word
+                );
+                &self.vocab[&self.unk_token]
+            });
             tokens.push(*token);
         }
 
@@ -71,32 +78,39 @@ impl Tokenizer {
             .join(" ")
     }
 
-    // Helper function to split sentence into words using a simple regex
-    fn tokenize_sentence(&self, sentence: &str) -> Vec<String> {
-        let re = Regex::new(r"\w+").unwrap(); // Matches words (letters and numbers)
-        re.find_iter(sentence)
-            .map(|mat| mat.as_str().to_string())
-            .collect()
+    // Helper function to split sentence into words using an improved regex
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokenizer() {
+        let input: Vec<String> = vec!["Hello world, my".parse().unwrap()];
+        let tokenizer = Tokenizer::new(input);
+
+        // Empty sentence
+        let tokens = tokenizer.tokenize("");
+        assert_eq!(tokens, vec![1, 2]); // <SOS>, <EOS>
+
+        // Sentence with punctuation
+        let tokens = tokenizer.tokenize("hello, world!");
+        // Detokenization
+        let decoded_sentence = tokenizer.detokenize(tokens.clone());
+        assert_eq!(decoded_sentence, "<SOS> hello , world <UNK> <EOS>");
     }
 }
 
 pub fn example_tokens() {
-    // Define a small vocabulary (for example purposes)
-    let vocab = vec![
-        ("hello".to_string(), 4),
-        ("world".to_string(), 5),
-        ("my".to_string(), 6),
-        ("name".to_string(), 7),
-        ("is".to_string(), 8),
-    ]
-    .into_iter()
-    .collect::<HashMap<String, usize>>();
+    // Define a small sentence
+    let input: Vec<String> = vec!["Hello, world!".parse().unwrap()];
 
     // Instantiate the tokenizer with the vocabulary
-    let tokenizer = Tokenizer::new(vocab);
+    let tokenizer = Tokenizer::new(input);
 
     // Example sentence
-    let sentence = "hello world";
+    let sentence = "Hello, world! My name is ChatGPT.";
 
     // Tokenize the sentence
     let tokens = tokenizer.tokenize(sentence);
@@ -104,5 +118,33 @@ pub fn example_tokens() {
 
     // Detokenize the sentence
     let decoded_sentence = tokenizer.detokenize(tokens);
-    println!("Decoded Sentence: {}", decoded_sentence); // Should print "hello world"
+    println!("Decoded Sentence: {}", decoded_sentence); // Should print the sequence with special tokens
+}
+
+pub fn generate_vocab(text: Vec<String>) -> HashMap<String, usize> {
+    let mut word_set = HashSet::new();
+
+    // Tokenize each sentence and collect words, treating punctuation separately
+    for sentence in text {
+        let words = tokenize_sentence(&sentence); // Updated tokenization method
+        for word in words {
+            word_set.insert(word.to_lowercase());
+        }
+    }
+
+    // Create vocabulary by assigning a unique index to each word
+    let vocab = word_set
+        .into_iter()
+        .enumerate()
+        .map(|(idx, word)| (word, idx + 4)) // Start index from 4 to leave space for special tokens
+        .collect::<HashMap<String, usize>>();
+
+    vocab
+}
+
+pub fn tokenize_sentence(sentence: &str) -> Vec<String> {
+    let re = Regex::new(r"\w+|[^\w\s]").unwrap(); // Matches words or punctuation
+    re.find_iter(sentence)
+        .map(|mat| mat.as_str().to_string())
+        .collect()
 }

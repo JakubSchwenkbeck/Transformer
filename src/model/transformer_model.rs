@@ -1,5 +1,6 @@
 #![allow(warnings)]
 use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
+use crate::data::learnable::{initialize_weights, LearnableWeights};
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::flatten_3d_array;
@@ -12,12 +13,12 @@ use rand::Rng;
 use std::collections::HashMap;
 
 pub fn transformer_model(
-    sentence: &str,                 // Input sentence
-    vocab: &HashMap<String, usize>, // Vocabulary
+    sentence: &str,       // Input sentence
+    tokenizer: Tokenizer, // Vocabulary
 ) -> Vec<String> {
     // Initialize Tokenizer and Embedding layer
-    let tokenizer = Tokenizer::new(vocab.clone());
-    let embedding = Embedding::new(vocab.len(), EMBEDDING_SIZE); // Initialize embedding layer
+
+    let embedding = Embedding::new(tokenizer.vocab.len(), EMBEDDING_SIZE); // Initialize embedding layer
 
     // Tokenize and embed the input sentence
     let tokens = tokenizer.tokenize(sentence);
@@ -33,9 +34,16 @@ pub fn transformer_model(
     let gamma = Array2::ones((1, EMBEDDING_SIZE)); // Example gamma (scale parameter)
     let beta = Array2::zeros((1, EMBEDDING_SIZE)); // Example beta (shift parameter)
 
+    let learnable_weights = LearnableWeights::new(
+        OUTPUT_SIZE,
+        HIDDEN_SIZE,
+        tokenizer.vocab.len(),
+        EMBEDDING_SIZE,
+        EMBEDDING_SIZE,
+        HIDDEN_SIZE,
+    );
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer =
-        FeedForwardLayer::new(BATCH_SIZE, INPUT_SIZE, OUTPUT_SIZE, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
 
     // Perform encoding with N stacked layers
     let mut encoded = input_tensor.clone();
@@ -63,12 +71,12 @@ pub fn transformer_model(
     }
 
     // Apply final linear transformation
-    let output_projection = Array2::ones((OUTPUT_SIZE, vocab.len())); // All ones weights
+    let output_projection = Array2::ones((OUTPUT_SIZE, tokenizer.vocab.len())); // All ones weights
     let logits = flatten_3d_array(decoded).dot(&output_projection); // Linear layer
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
 
     // Convert probabilities back to text using the tokenizer
-    predict_tokens(probabilities.view(), vocab)
+    predict_tokens(probabilities.view(), &tokenizer.vocab)
 }
