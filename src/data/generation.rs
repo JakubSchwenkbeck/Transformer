@@ -81,7 +81,10 @@ pub fn example_gen() {
         }
     }
 }
-pub fn generate_staircase_pairs(input: &[usize], target: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
+pub fn generate_staircase_pairs(
+    input: &[usize],
+    target: &[usize],
+) -> Vec<(Vec<usize>, Vec<usize>)> {
     let mut staircase_pairs = Vec::new();
 
     // The number of steps will be the length of the target sequence

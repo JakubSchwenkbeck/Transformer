@@ -2,6 +2,7 @@
 
 use crate::math::positional_encoding::sinusoidal_pos_encoding;
 use ndarray::{s, Array, Array2, ArrayView, ArrayView2, Axis, Ix1};
+use std::cmp::Ordering;
 //use rand::Rng;
 use rand::Rng;
 use std::collections::HashMap;
@@ -114,7 +115,7 @@ pub fn predict_tokens(
         let max_index = probs
             .iter()
             .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))// TODO : Need better MaM handling than asserting equal
             .unwrap()
             .0;
 

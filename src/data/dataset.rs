@@ -1,23 +1,21 @@
-use ndarray::Data;
 use crate::data::generation::{generate_input_target_pairs, generate_staircase_pairs};
 use crate::data::io::get_input;
 use crate::data::tokenizer::Tokenizer;
+use ndarray::Data;
 
 #[allow(dead_code)]
 pub struct Dataset {
-    pub(crate) inputs: Vec<Vec<usize>>,  // Each input is a sequence of token IDs
+    pub(crate) inputs: Vec<Vec<usize>>, // Each input is a sequence of token IDs
     pub(crate) targets: Vec<Vec<usize>>, // Each target is the corresponding output sequence
 }
 
-
-pub fn gen_data() -> (Tokenizer,Dataset){
+pub fn gen_data() -> (Tokenizer, Dataset) {
     let raw_text = get_input();
 
     let tokenizer = Tokenizer::new(raw_text.clone());
 
     // Generate input-target pairs
     let pairs = generate_input_target_pairs(&tokenizer, raw_text);
-
 
     let mut all_inputs = Vec::new();
     let mut all_targets = Vec::new();
@@ -34,10 +32,11 @@ pub fn gen_data() -> (Tokenizer,Dataset){
     }
 
     // Return tokenizer and the generated dataset
-    (tokenizer, Dataset {
-        inputs: all_inputs,
-        targets: all_targets,
-    })
-
-
+    (
+        tokenizer,
+        Dataset {
+            inputs: all_inputs,
+            targets: all_targets,
+        },
+    )
 }
