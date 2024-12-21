@@ -143,6 +143,7 @@ impl FeedForwardLayer {
 }
 
 /// He initialization function.
+/*
 fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
     let mut rng = rand::rng();
     let scale = (2.0 / input_size as f32).sqrt();
@@ -150,6 +151,10 @@ fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
         .map(|_| rng.random_range(-scale..scale))
         .collect();
     Array2::from_shape_vec((input_size, output_size), values).unwrap()
+}
+*/
+fn he_initialization(input_size: usize, output_size: usize) -> Array2<f32> {
+    Array2::ones((input_size, output_size))
 }
 
 /// Initializes bias vectors with zeros.
