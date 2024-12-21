@@ -1,20 +1,14 @@
-use ndarray::{Array2, Array3};
 use Transformer::data::generation::example_gen;
 use Transformer::data::tokenizer::Tokenizer;
 use Transformer::example::example;
-use Transformer::layers::feedforward_layer::FeedForwardLayer;
-use Transformer::math::linear_algebra::flatten_3d_array;
-use Transformer::model::decoder::decoding;
-use Transformer::model::embedding::Embedding;
-use Transformer::model::encoder::encoding;
+
 use Transformer::model::transformer_model::transformer_model;
-use Transformer::settings::{BATCH_SIZE, DROPOUT_RATE, EMBEDDING_SIZE, INPUT_SIZE, OUTPUT_SIZE};
 fn main() {
     println!("runs successfully!");
     println!("============= ATTENTION WEIGHT EXAMPLE =============");
     example();
 
-    println!(" \n \n \n ENCODER/DECODER  \n");
+    /*println!(" \n \n \n ENCODER/DECODER  \n");
 
     let input: Vec<String> = vec!["hello world rust transformer learning model"
         .parse()
@@ -42,9 +36,8 @@ fn main() {
     let beta = Array2::zeros((1, 12)); // Example beta (shift parameter)
 
     // Initialize the feed-forward layer with correct types
-
-    let feed_forward_layer =
-        FeedForwardLayer::new(BATCH_SIZE, INPUT_SIZE, OUTPUT_SIZE, DROPOUT_RATE);
+    let learnable_weights = initialize_weights();
+    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
 
     // Perform encoding (transformer layer)
     let epsilon = 1e-6; // Small epsilon for numerical stability
@@ -73,6 +66,10 @@ fn main() {
 
     println!("Tokens: {:?}", tokens);
 
+    */
+    let sentence = "hello rust world";
+    let input: Vec<String> = vec!["Hello rust world my name".parse().unwrap()];
+    let tokenizer = Tokenizer::new(input);
     let predicted_token = transformer_model(sentence, tokenizer);
 
     println!("Predicted Token: {:?}", predicted_token);

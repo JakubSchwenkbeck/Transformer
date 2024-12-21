@@ -1,5 +1,6 @@
 #![allow(warnings)]
 use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
+use crate::data::learnable::{initialize_weights, LearnableWeights};
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::flatten_3d_array;
@@ -33,9 +34,16 @@ pub fn transformer_model(
     let gamma = Array2::ones((1, EMBEDDING_SIZE)); // Example gamma (scale parameter)
     let beta = Array2::zeros((1, EMBEDDING_SIZE)); // Example beta (shift parameter)
 
+    let learnable_weights = LearnableWeights::new(
+        OUTPUT_SIZE,
+        HIDDEN_SIZE,
+        tokenizer.vocab.len(),
+        EMBEDDING_SIZE,
+        EMBEDDING_SIZE,
+        HIDDEN_SIZE,
+    );
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer =
-        FeedForwardLayer::new(BATCH_SIZE, INPUT_SIZE, OUTPUT_SIZE, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
 
     // Perform encoding with N stacked layers
     let mut encoded = input_tensor.clone();
