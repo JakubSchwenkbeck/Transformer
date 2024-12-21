@@ -11,6 +11,8 @@ pub const EMBEDDING_SIZE: usize = 12;
 pub const INPUT_SIZE: usize = 12;
 pub const OUTPUT_SIZE: usize = 12;
 
+pub const NUM_LAYERS: usize = 6;
+
 pub const HIDDEN_SIZE: usize = 6;
 
 pub const DROPOUT_RATE: f32 = 0.1; // Dropout rate for regularization

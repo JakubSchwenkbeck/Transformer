@@ -26,7 +26,7 @@ pub fn transformer_model(
     // Convert embeddings to Array3 (batch_size, seq_length, embed_size)
     let input_tensor = Array3::from_shape_fn(
         (BATCH_SIZE, tokens.len(), EMBEDDING_SIZE),
-        |(batch, seq, _)| embeddings[[seq, batch]],
+        |(_, seq, embed)| embeddings[[seq, embed]],
     );
 
     // Initialize gamma and beta for layer normalization
@@ -37,24 +37,30 @@ pub fn transformer_model(
     let feed_forward_layer =
         FeedForwardLayer::new(BATCH_SIZE, INPUT_SIZE, OUTPUT_SIZE, DROPOUT_RATE);
 
-    // Perform encoding (transformer encoder)
-    let encoded = encoding(
-        input_tensor.clone(),
-        gamma.clone(),
-        beta.clone(),
-        EPSILON,
-        &feed_forward_layer,
-    );
+    // Perform encoding with N stacked layers
+    let mut encoded = input_tensor.clone();
+    for _ in 0..NUM_LAYERS {
+        encoded = encoding(
+            encoded,
+            gamma.clone(),
+            beta.clone(),
+            EPSILON,
+            &feed_forward_layer,
+        );
+    }
 
-    // Perform decoding (transformer decoder)
-    let decoded = decoding(
-        input_tensor,
-        encoded.clone(),
-        gamma,
-        beta,
-        EPSILON,
-        &feed_forward_layer,
-    );
+    // Perform decoding with N stacked layers
+    let mut decoded = input_tensor.clone();
+    for _ in 0..NUM_LAYERS {
+        decoded = decoding(
+            decoded,
+            encoded.clone(),
+            gamma.clone(),
+            beta.clone(),
+            EPSILON,
+            &feed_forward_layer,
+        );
+    }
 
     // Apply final linear transformation
     let output_projection = Array2::ones((OUTPUT_SIZE, vocab.len())); // All ones weights

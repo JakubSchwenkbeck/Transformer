@@ -33,16 +33,16 @@ fn main() {
     let tokenizer = Tokenizer::new(vocab.clone());
     let embedding = Embedding::new(6, 12); // Example vocab size and embedding size
                                            // Input sentence
-    let sentence = "hello  world model";
+    let sentence = "hello world rust";
 
     // Tokenize and embed the input
     let tokens = tokenizer.tokenize(sentence);
     let embeddings = embedding.forward(tokens.clone());
+    println!("embeddings: {:?}", embeddings);
 
-    // Convert embeddings to Array3 (batch_size, seq_length, embed_size)
     let input_tensor = Array3::from_shape_fn(
         (BATCH_SIZE, tokens.len(), EMBEDDING_SIZE),
-        |(batch, seq, _)| embeddings[[seq, batch]],
+        |(_, seq, embed)| embeddings[[seq, embed]],
     );
 
     println!("INPUT : {}", input_tensor.clone());
