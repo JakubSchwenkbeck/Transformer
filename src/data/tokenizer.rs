@@ -14,7 +14,7 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new(input: Vec<&str>) -> Self {
+    pub fn new(input: Vec<String>) -> Self {
         let vocab: HashMap<String, usize> = generate_vocab(input);
         println!("size : {:?}", vocab.clone().len());
 
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer() {
-        let input = vec!["Hello world, my"];
+        let input: Vec<String> = vec!["Hello world, my".parse().unwrap()];
         let tokenizer = Tokenizer::new(input);
 
         // Empty sentence
@@ -104,7 +104,7 @@ mod tests {
 
 pub fn example_tokens() {
     // Define a small sentence
-    let input = vec!["Hello, world!"];
+    let input: Vec<String> = vec!["Hello, world!".parse().unwrap()];
 
     // Instantiate the tokenizer with the vocabulary
     let tokenizer = Tokenizer::new(input);
@@ -121,7 +121,7 @@ pub fn example_tokens() {
     println!("Decoded Sentence: {}", decoded_sentence); // Should print the sequence with special tokens
 }
 
-pub fn generate_vocab(text: Vec<&str>) -> HashMap<String, usize> {
+pub fn generate_vocab(text: Vec<String>) -> HashMap<String, usize> {
     let mut word_set = HashSet::new();
 
     // Tokenize each sentence and collect words, treating punctuation separately

@@ -16,7 +16,9 @@ fn main() {
 
     println!(" \n \n \n ENCODER/DECODER  \n");
 
-    let input = vec!["hello world rust transformer learning model"];
+    let input: Vec<String> = vec!["hello world rust transformer learning model"
+        .parse()
+        .unwrap()];
 
     // Initialize Tokenizer and Embedding layer
     let tokenizer = Tokenizer::new(input.clone());
@@ -75,5 +77,5 @@ fn main() {
 
     println!("Predicted Token: {:?}", predicted_token);
 
-    example_gen()
+    example_gen();
 }

@@ -1,13 +1,14 @@
+use crate::data::io::get_input;
 use crate::data::tokenizer::Tokenizer;
 
 fn generate_input_target_pairs(
     tokenizer: &Tokenizer,
-    sentences: Vec<&str>,
+    sentences: Vec<String>,
 ) -> Vec<(Vec<usize>, Vec<usize>)> {
     let mut pairs = Vec::new();
 
     for i in 0..sentences.len() {
-        let sentence = sentences[i];
+        let sentence = &sentences[i]; // Borrow the sentence
         let tokens = tokenizer.tokenize(sentence);
 
         // Prepare input (same as sentence)
@@ -16,15 +17,22 @@ fn generate_input_target_pairs(
         // Prepare target (shifted version of the sentence)
         let mut target = tokens.clone();
         if i + 1 < sentences.len() {
-            // If not the last sentence, the last word will be the first word of the next sentence
-            target.push(tokenizer.tokenize(sentences[i + 1])[0]); // First token of the next sentence
+            // If not the last sentence, append the first token of the next sentence
+            let next_sentence = &sentences[i + 1];
+            let next_tokens = tokenizer.tokenize(next_sentence);
+            if !next_tokens.is_empty() {
+                target.push(next_tokens[0]); // Add the first token of the next sentence
+            }
         } else {
-            target.push(tokenizer.vocab["<EOS>"]); // Use EOS token for the last word
+            target.push(tokenizer.vocab["<EOS>"]); // Use EOS token for the last sentence
         }
 
-        // Remove the first word from target (shift by 1)
-        target.remove(0);
+        // Remove the first token from target (shifting by 1)
+        if !target.is_empty() {
+            target.remove(0);
+        }
 
+        // Add the input-target pair to the result
         pairs.push((input, target));
     }
 
@@ -50,19 +58,7 @@ fn generate_input_target_pairs_by_sentence(
 }
 
 pub fn example_gen() {
-    let raw_text = vec![
-        "Once upon a time, in a land far away, there was a small village.",
-        "The villagers were known for their kindness and generosity.",
-        "Every year, they celebrated the harvest festival with music, dance, and delicious food.",
-        "One day, a traveler came to the village.",
-        "He was tired and hungry, but the villagers welcomed him with open arms.",
-        "The traveler shared stories of his adventures as the villagers listened intently.",
-        "He told them about distant lands and strange creatures.",
-        "The villagers were fascinated by his tales.",
-        "As the evening drew to a close, the traveler offered to leave the village, but the villagers insisted he stay for another night.",
-        "The next morning, the traveler said goodbye and continued his journey.",
-        "The villagers waved him off, grateful for the stories and the company.",
-    ];
+    let raw_text = get_input();
 
     let tokenizer = Tokenizer::new(raw_text.clone());
 
