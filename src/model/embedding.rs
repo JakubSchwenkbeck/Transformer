@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
 use crate::math::positional_encoding::sinusoidal_pos_encoding;
-use ndarray::{s, Array2, ArrayView, ArrayView2, Axis, Ix1};
+use ndarray::{s, Array, Array2, ArrayView, ArrayView2, Axis, Ix1};
 //use rand::Rng;
+use rand::Rng;
 use std::collections::HashMap;
 
 pub struct Embedding {
@@ -14,26 +15,9 @@ pub struct Embedding {
 impl Embedding {
     pub fn new(vocab_size: usize, embed_size: usize) -> Self {
         // Initialize with random values for simplicity
-        //let mut rng = rand::rng();
-        //let mut _weights =Array::from_shape_fn((vocab_size, embed_size), |_| rng.random_range(-1.0..1.0));
-        let weights = Array2::from_shape_vec(
-            (6, 12),
-            vec![
-                // Embedding for "hello"
-                50.0, 50.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                // Embedding for "world"
-                0.0, 0.0, 50.0, 50.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                // Embedding for "rust"
-                0.0, 0.0, 0.0, 0.0, 50.0, 50.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                // Embedding for "transformer"
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 50.0, 50.0, 0.0, 0.0, 0.0, 0.0,
-                // Embedding for "learning"
-                0.0, 00.0, 0.0, 00.0, 0.0, 00.0, 0.0, 00.0, 50.0, 50.0, 0.0, 00.0,
-                // Embedding for "model"
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 50.0, 50.0,
-            ],
-        )
-        .unwrap();
+        let mut rng = rand::rng();
+        let weights =
+            Array::from_shape_fn((vocab_size, embed_size), |_| rng.random_range(-1.0..1.0));
 
         Embedding {
             vocab_size,
