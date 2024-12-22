@@ -1,17 +1,16 @@
 use crate::data::learnable::LearnableWeights;
 use crate::settings::*;
-use crate::training::loss_function::cross_entropy_loss;
 use ndarray::{Array1, Array2};
 
 pub fn compute_gradients(
-    logits: &Array2<f32>,
-    target_sequence: &Array1<usize>,
+    _logits: &Array2<f32>,
+    _target_sequence: &Array1<usize>,
     vocab_size: usize,
-    model: &LearnableWeights,
+    _model: &LearnableWeights,
 ) -> LearnableWeights {
-    //  compute gradients for all the learnable weights in the model
+    // TODO: compute gradients for all the learnable weights in the model
 
-    // FOR NOW ONLY COPY WEIGHTS...
+    // FTEMPO!!! :OR NOW ONLY COPY WEIGHTS...
     LearnableWeights::new(
         OUTPUT_SIZE,
         HIDDEN_SIZE,

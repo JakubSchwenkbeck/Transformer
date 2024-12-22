@@ -115,7 +115,7 @@ pub fn predict_tokens(
         let max_index = probs
             .iter()
             .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))// TODO : Need better MaM handling than asserting equal
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better MaM handling than asserting equal
             .unwrap()
             .0;
 

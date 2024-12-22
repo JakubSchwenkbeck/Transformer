@@ -1,9 +1,7 @@
 use crate::data::generation::{generate_input_target_pairs, generate_staircase_pairs};
 use crate::data::io::get_input;
 use crate::data::tokenizer::Tokenizer;
-use ndarray::Data;
 
-#[allow(dead_code)]
 pub struct Dataset {
     pub(crate) inputs: Vec<Vec<usize>>, // Each input is a sequence of token IDs
     pub(crate) targets: Vec<Vec<usize>>, // Each target is the corresponding output sequence
