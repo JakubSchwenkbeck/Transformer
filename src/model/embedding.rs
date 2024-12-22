@@ -99,6 +99,32 @@ impl Embedding {
 pub fn norm(vector: ArrayView<f32, Ix1>) -> f32 {
     vector.mapv(|x| x * x).sum().sqrt()
 }
+
+pub fn predict_index( probabilities: ArrayView2<f32>,
+                      vocab: &HashMap<String, usize>, ) -> Vec<usize>{
+
+    // Reverse the vocab to get a mapping from index to token
+    let _index_to_token: HashMap<usize, String> =
+        vocab.iter().map(|(k, &v)| (v, k.clone())).collect();
+
+    let mut predicted_tokens = Vec::new();
+
+    for probs in probabilities.axis_iter(Axis(0)) {
+        // Iterate over the rows (sequence tokens)
+        // Find the index of the maximum probability
+        let max_index = probs
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better NaN handling than asserting equal
+            .unwrap()
+            .0;
+
+            predicted_tokens.push(max_index.clone());
+
+    }
+
+    predicted_tokens
+}
 pub fn predict_tokens(
     probabilities: ArrayView2<f32>,
     vocab: &HashMap<String, usize>,
@@ -115,7 +141,7 @@ pub fn predict_tokens(
         let max_index = probs
             .iter()
             .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better MaM handling than asserting equal
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better NaN handling than asserting equal
             .unwrap()
             .0;
 
