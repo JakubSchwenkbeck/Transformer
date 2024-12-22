@@ -42,7 +42,7 @@ impl LearnableWeights {
             query_weights: Array2::ones((embedding_dim, attention_dim)),
             key_weights: Array2::ones((embedding_dim, attention_dim)),
             value_weights: Array2::ones((embedding_dim, attention_dim)),
-            output_projection: Array2::ones((attention_dim, embedding_dim)),
+            output_projection: Array2::ones((attention_dim, vocab_size)),
 
             // Feedforward Network
             linear1_weights: Array2::ones((embedding_dim, ffn_dim)),
