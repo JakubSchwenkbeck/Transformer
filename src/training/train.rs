@@ -1,70 +1,63 @@
 use crate::data::learnable::LearnableWeights;
 use crate::settings::*;
-use ndarray::{Array1, Array2, Axis};
+use ndarray::{Array1, Array2, Array3, Axis};
 use crate::attention::softmax::softmax_matrix;
+use crate::math::linear_algebra::flatten_3d_array;
 
+/// Compute gradients for the transformer model's learnable weights.
 pub fn compute_gradients(
-    logits: &Array2<f32>,
-    target_sequence: &Array1<usize>,
-    vocab_size: usize,
-    model: &LearnableWeights,
+    weights: &mut LearnableWeights,
+    inputs: &Array3<f32>,
+    targets: &Array2<f32>,
+    predictions: &Array2<f32>,
+    vocabsize : usize,
 ) -> LearnableWeights {
-    // Compute the softmax probabilities
-    let probabilities = softmax_matrix(logits);
+    let mut gradients = LearnableWeights::new(
+        OUTPUT_SIZE,
+        HIDDEN_SIZE,
+        vocabsize,   // Ensure the vocab size is correct
+        D_MODEL,
+        D_K,
+        FFN_DIM,
+    );
 
-    // One-hot encode the target sequence (row = token in sequence, col is vocab index)
-    println!("Target seqeuence: {:?}",target_sequence);
-    let mut target_one_hot = Array2::<f32>::zeros((target_sequence.len(), vocab_size));
-    for (i, &target_idx) in target_sequence.iter().enumerate() {
-        target_one_hot[[i, target_idx]] = 1.0;
-    }
+    // Compute the loss and its derivative
+    let loss = predictions - targets;
+    let d_loss = &loss * 2.0 / (BATCH_SIZE as f32);
 
-    // Compute the loss gradient with respect to logits
-    let d_logits = &probabilities - &target_one_hot;
-    println!("d_logits shape: {:?}", logits.dim());
+    // Compute gradients for the output projection weights
+    gradients.output_projection_vocab = predictions.t().dot(&d_loss);
 
-    // Backpropagate the gradient through the output projection layer
-    let d_output_projection = d_logits.dot(&model.output_projection.t());
-    // Compute gradients for output_projection_vocab
-    let d_output_projection_vocab = d_logits.sum_axis(Axis(0)).insert_axis(Axis(1));
+    // Flattened inputs for further computations
+    let flattened_inputs = flatten_3d_array(inputs.clone());
 
-    // Backpropagate through layer normalization
-    // Compute gradients for layer normalization parameters
-    let d_hidden = d_logits.dot(&model.linear2_weights.t());
-    let d_layer_norm_scale = d_hidden.mean_axis(Axis(0)).unwrap().to_vec();
-    let d_layer_norm_shift = d_hidden.std_axis(Axis(0), 0.0).to_vec();
+    // Compute gradients for the feedforward network weights
+    let d_linear2 = d_loss.dot(&weights.linear2_weights.t());
+    gradients.linear2_weights = flattened_inputs.t().dot(&d_linear2);
+    gradients.bias2 = d_linear2.sum_axis(ndarray::Axis(0));
 
-    // Compute gradients for the embedding
-    let d_embedding = d_hidden.dot(&model.embedding.t());
+    let d_linear1 = d_linear2.dot(&weights.linear1_weights.t());
+    gradients.linear1_weights = flattened_inputs.t().dot(&d_linear1);
+    gradients.bias1 = d_linear1.sum_axis(ndarray::Axis(0));
 
-    // Compute gradients for attention weights (query, key, value)
-    let d_query_weights = d_hidden.dot(&model.query_weights.t());
-    let d_key_weights = d_hidden.dot(&model.key_weights.t());
-    let d_value_weights = d_hidden.dot(&model.value_weights.t());
+    // Compute gradients for the attention mechanism weights
+    let d_attention_output = d_loss.dot(&weights.output_projection.t());
+    gradients.output_projection = flattened_inputs.t().dot(&d_attention_output);
+    let d_value = d_attention_output.dot(&weights.value_weights.t());
+    gradients.value_weights = flattened_inputs.t().dot(&d_value);
+    let d_key = d_attention_output.dot(&weights.key_weights.t());
+    gradients.key_weights = flattened_inputs.t().dot(&d_key);
+    let d_query = d_attention_output.dot(&weights.query_weights.t());
+    gradients.query_weights = flattened_inputs.t().dot(&d_query);
 
-    // Compute gradients for linear layers
-    let d_linear1_weights = d_hidden.dot(&model.linear1_weights.t());
-    let d_linear2_weights = model.linear2_weights.t().dot(&d_logits);
+    // Compute gradients for the embedding layer
+    gradients.embedding = inputs.mean_axis(ndarray::Axis(0)).unwrap(); // Ensure shape consistency with model.embedding
 
-    // Compute biases
-    let d_bias1 = d_hidden.sum_axis(Axis(0));
-    let d_bias2 = d_logits.sum_axis(Axis(0));
+    // Compute gradients for layer normalization parameters (scale and shift)
+    gradients.layer_norm_scale = d_linear1.mean_axis(ndarray::Axis(0)).unwrap().to_vec();
+    gradients.layer_norm_shift = d_linear1.sum_axis(ndarray::Axis(0)).to_vec();
 
-    // Package gradients into a LearnableWeights structure
-    LearnableWeights {
-        embedding: d_embedding,
-        query_weights: d_query_weights,
-        key_weights: d_key_weights,
-        value_weights: d_value_weights,
-        output_projection: d_output_projection,
-        linear1_weights: d_linear1_weights,
-        linear2_weights: d_linear2_weights,
-        bias1: d_bias1,
-        bias2: d_bias2,
-        layer_norm_scale: d_layer_norm_scale, // Converted to Vec<f32>
-        layer_norm_shift: d_layer_norm_shift, // Converted to Vec<f32>
-        output_projection_vocab: d_output_projection_vocab, // Correct shape as Array2<f32>
-    }
+    gradients
 }
 
 
@@ -74,6 +67,8 @@ pub fn update_weights(
     gradients: &LearnableWeights,
     learning_rate: f32,
 ) {
+
+    println!("EMBEDDING OLD :{:?}, EMBEDDING NEW: {:?}",model.embedding.shape(),gradients.embedding.shape());
     // Ensure the gradients and model weights have compatible shapes (reshape if necessary)
     model.embedding = &model.embedding - &(&gradients.embedding * learning_rate);
     model.query_weights = &model.query_weights - &(&gradients.query_weights * learning_rate);

@@ -60,8 +60,27 @@ fn train_model(
             total_loss += loss; // Accumulate loss for averaging
             num_batches += 1;
 
+            // Prepare inputs, targets, and predictions for gradient computation
+            let inputs = Array3::from_shape_fn(
+                (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
+                |(_, seq, embed)| logits[[seq, embed]],
+            );
+
+            let targets = Array2::from_shape_fn(
+                (target.len(), logits.shape()[1]),
+                |(seq, embed)| logits[[seq, embed]],
+            );
+
+            let predictions = logits.clone();
+
             // Backward pass: Compute gradients
-            let gradients = compute_gradients(&logits, &target_seq, vocab_size, &learnable_weights);
+            let gradients = compute_gradients(
+                &mut learnable_weights,
+                &inputs,
+                &targets,
+                &predictions,
+                vocab_size
+            );
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);

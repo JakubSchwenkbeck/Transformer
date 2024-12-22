@@ -1,5 +1,5 @@
-use crate::settings::*;
 use ndarray::{Array1, Array2};
+use crate::settings::*;
 
 pub struct LearnableWeights {
     // Embedding Layer
@@ -14,8 +14,8 @@ pub struct LearnableWeights {
     // Feedforward Network
     pub linear1_weights: Array2<f32>, // (embedding_dim, ffn_dim)
     pub linear2_weights: Array2<f32>, // (ffn_dim, embedding_dim)
-    pub bias1: Array1<f32>,
-    pub bias2: Array1<f32>,
+    pub bias1: Array1<f32>,           // (ffn_dim)
+    pub bias2: Array1<f32>,           // (embedding_dim)
 
     // Layer Normalization
     pub layer_norm_scale: Vec<f32>, // (embedding_dim,)
@@ -42,13 +42,13 @@ impl LearnableWeights {
             query_weights: Array2::ones((embedding_dim, attention_dim)),
             key_weights: Array2::ones((embedding_dim, attention_dim)),
             value_weights: Array2::ones((embedding_dim, attention_dim)),
-            output_projection: Array2::ones((attention_dim, vocab_size)),
+            output_projection: Array2::ones((attention_dim, embedding_dim)),
 
             // Feedforward Network
             linear1_weights: Array2::ones((embedding_dim, ffn_dim)),
             linear2_weights: Array2::ones((ffn_dim, embedding_dim)),
-            bias1: Array1::zeros(hidden_size),
-            bias2: Array1::zeros(output_size),
+            bias1: Array1::zeros(ffn_dim),
+            bias2: Array1::zeros(embedding_dim),
 
             // Layer Normalization
             layer_norm_scale: vec![1.0; embedding_dim], // Initialize scale to 1
@@ -59,13 +59,14 @@ impl LearnableWeights {
         }
     }
 }
+
 pub fn initialize_weights() -> LearnableWeights {
     LearnableWeights::new(
-        OUTPUT_SIZE, // output_size
-        HIDDEN_SIZE, // hidden_size
-        D_MODEL,     // vocab_size
-        D_MODEL,     // embedding_dim
-        D_K,         // attention_dim (for keys, queries)
-        D_V,         // ffn_dim (could align with embedding_dim or specific)
+        D_MODEL,      // output_size = D_MODEL
+        FFN_DIM,      // hidden_size = FFN_DIM
+        D_MODEL,      // vocab_size
+        D_MODEL,      // embedding_dim = D_MODEL
+        D_K,          // attention_dim
+        FFN_DIM,      // ffn_dim
     )
 }
