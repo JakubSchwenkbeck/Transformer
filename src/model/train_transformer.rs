@@ -74,13 +74,8 @@ fn train_model(
             let predictions = logits.clone();
 
             // Backward pass: Compute gradients
-            let gradients = compute_gradients(
-                &mut learnable_weights,
-                &inputs,
-                &targets,
-                &predictions,
-                vocab_size,
-            );
+            let gradients =
+                compute_gradients(&mut learnable_weights, &inputs, &targets, &predictions);
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);

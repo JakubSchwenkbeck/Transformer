@@ -9,15 +9,14 @@ pub fn compute_gradients(
     inputs: &Array3<f32>,
     targets: &Array2<f32>,
     predictions: &Array2<f32>,
-    vocabsize: usize,
 ) -> LearnableWeights {
     let mut gradients = LearnableWeights::new(
-        OUTPUT_SIZE,
-        HIDDEN_SIZE,
-        vocabsize, // Ensure the vocab size is correct
-        D_MODEL,
-        D_K,
-        FFN_DIM,
+        D_MODEL, // output_size = D_MODEL
+        FFN_DIM, // hidden_size = FFN_DIM
+        D_MODEL, // vocab_size
+        D_MODEL, // embedding_dim = D_MODEL
+        D_K,     // attention_dim
+        FFN_DIM, // ffn_dim
     );
 
     // Compute the loss and its derivative
@@ -64,11 +63,6 @@ pub fn update_weights(
     gradients: &LearnableWeights,
     learning_rate: f32,
 ) {
-    println!(
-        "EMBEDDING OLD :{:?}, EMBEDDING NEW: {:?}",
-        model.embedding.shape(),
-        gradients.embedding.shape()
-    );
     // Ensure the gradients and model weights have compatible shapes (reshape if necessary)
     model.embedding = &model.embedding - &(&gradients.embedding * learning_rate);
     model.query_weights = &model.query_weights - &(&gradients.query_weights * learning_rate);
@@ -76,6 +70,15 @@ pub fn update_weights(
     model.value_weights = &model.value_weights - &(&gradients.value_weights * learning_rate);
     model.output_projection =
         &model.output_projection - &(&gradients.output_projection * learning_rate);
+
+    println!(
+        "lin1 OLD :{:?}, lin1 NEW: {:?}",
+        model.linear1_weights.shape(),
+        gradients.linear1_weights.shape()
+    );
+
+    // TODO DEBUG SHAPE issues (old 88,128 and new 88,88 which seems wrong)
+
     model.linear1_weights = &model.linear1_weights - &(&gradients.linear1_weights * learning_rate);
     model.linear2_weights = &model.linear2_weights - &(&gradients.linear2_weights * learning_rate);
 

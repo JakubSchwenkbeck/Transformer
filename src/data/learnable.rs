@@ -39,23 +39,23 @@ impl LearnableWeights {
             embedding: Array2::ones((vocab_size, embedding_dim)),
 
             // Attention Mechanism
-            query_weights: Array2::ones((embedding_dim, attention_dim)),
-            key_weights: Array2::ones((embedding_dim, attention_dim)),
-            value_weights: Array2::ones((embedding_dim, attention_dim)),
-            output_projection: Array2::ones((attention_dim, embedding_dim)),
+            query_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            key_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            value_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            output_projection: Array2::ones((attention_dim, embedding_dim)), // (attention_dim, embedding_dim)
 
             // Feedforward Network
-            linear1_weights: Array2::ones((embedding_dim, ffn_dim)),
-            linear2_weights: Array2::ones((ffn_dim, embedding_dim)),
-            bias1: Array1::zeros(ffn_dim),
-            bias2: Array1::zeros(embedding_dim),
+            linear1_weights: Array2::ones((embedding_dim, ffn_dim)), // (embedding_dim, ffn_dim)
+            linear2_weights: Array2::ones((ffn_dim, embedding_dim)), // (ffn_dim, embedding_dim)
+            bias1: Array1::zeros(ffn_dim),                           // (ffn_dim)
+            bias2: Array1::zeros(embedding_dim),                     // (embedding_dim)
 
             // Layer Normalization
-            layer_norm_scale: vec![1.0; embedding_dim], // Initialize scale to 1
-            layer_norm_shift: vec![0.0; embedding_dim], // Initialize shift to 0
+            layer_norm_scale: vec![1.0; embedding_dim], // Initialize scale to 1 (embedding_dim,)
+            layer_norm_shift: vec![0.0; embedding_dim], // Initialize shift to 0 (embedding_dim,)
 
             // Output Layer
-            output_projection_vocab: Array2::zeros((embedding_dim, output_size)),
+            output_projection_vocab: Array2::zeros((embedding_dim, output_size)), // (embedding_dim, vocab_size)
         }
     }
 }

@@ -4,7 +4,7 @@
 pub const EPSILON: f32 = 0.0001;
 
 // Embedding size
-pub const D_MODEL: usize = 32; // Reduced to 32 for a smaller model size
+pub const D_MODEL: usize = 88;
 
 // Attention mechanism dimensions
 pub const D_K: usize = 32; // Key/query dimension (same as D_V for simplicity)

@@ -107,11 +107,18 @@ fn pad_sequence_to_length(seq: &[usize], max_length: usize) -> Vec<usize> {
     let mut padded_seq = seq.to_vec();
 
     // Pad with <PAD> token if the sequence is shorter than max_length
-    if padded_seq.len() < max_length {
-        padded_seq.resize(max_length, 0); // 0 is the <PAD> token index
-    } else if padded_seq.len() > max_length {
-        // Truncate if the sequence is too long
-        padded_seq.truncate(max_length);
+    match padded_seq.len().cmp(&max_length) {
+        std::cmp::Ordering::Less => {
+            // If the sequence is too short, pad it with <PAD> tokens (0)
+            padded_seq.resize(max_length, 0);
+        }
+        std::cmp::Ordering::Greater => {
+            // If the sequence is too long, truncate it
+            padded_seq.truncate(max_length);
+        }
+        std::cmp::Ordering::Equal => {
+            // If the sequence is already the correct length, do nothing
+        }
     }
 
     padded_seq
