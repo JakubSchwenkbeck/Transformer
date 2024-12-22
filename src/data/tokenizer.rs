@@ -2,6 +2,7 @@
 
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+use crate::settings::INPUT_SIZE;
 
 #[derive(Debug)]
 pub struct Tokenizer {
@@ -64,7 +65,7 @@ impl Tokenizer {
             tokens.push(*token);
         }
 
-        tokens.push(self.vocab[&self.eos_token]); // Add EOS token at the end
+        tokens.push(self.vocab[&self.eos_token]);// Add EOS token at the end
         tokens
     }
 
@@ -78,8 +79,19 @@ impl Tokenizer {
             .join(" ")
     }
 
-    // Helper function to split sentence into words using an improved regex
-}
+    pub fn pad_sequence(&self, tokens: Vec<usize>, max_length: usize) -> Vec<usize> {
+        let mut padded = tokens.clone();
+
+        // Pad with the PAD token if the sequence is too short
+        if tokens.len() < max_length {
+            padded.resize(max_length, self.vocab[&self.pad_token]);
+        } else if tokens.len() > max_length {
+            // Truncate if the sequence is too long
+            padded.truncate(max_length);
+        }
+
+        padded
+    }}
 
 #[cfg(test)]
 mod tests {
