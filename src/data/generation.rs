@@ -15,7 +15,6 @@ pub fn generate_input_target_pairs(
         // Prepare input (same as sentence)
         let input = tokenizer.pad_sequence(tokens.clone(), INPUT_SIZE);
 
-
         // Prepare target (shifted version of the sentence)
         let mut target = tokens.clone();
         if i + 1 < sentences.len() {
@@ -25,7 +24,6 @@ pub fn generate_input_target_pairs(
             if !next_tokens.is_empty() {
                 target.push(next_tokens[0]); // Add the first token of the next sentence
             }
-
         } else {
             target.push(tokenizer.vocab["<EOS>"]); // Use EOS token for the last sentence
         }
@@ -98,7 +96,7 @@ pub fn generate_staircase_pairs(
 
         // Pad both input and target sequences to max_length
         let staircase_input = pad_sequence_to_length(&staircase_input, INPUT_SIZE);
-    let staircase_target = pad_sequence_to_length(&staircase_target, INPUT_SIZE);
+        let staircase_target = pad_sequence_to_length(&staircase_target, INPUT_SIZE);
         // Add this pair to the staircase pairs vector
         staircase_pairs.push((staircase_input, staircase_target));
     }

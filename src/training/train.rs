@@ -1,8 +1,7 @@
 use crate::data::learnable::LearnableWeights;
-use crate::settings::*;
-use ndarray::{Array1, Array2, Array3, Axis};
-use crate::attention::softmax::softmax_matrix;
 use crate::math::linear_algebra::flatten_3d_array;
+use crate::settings::*;
+use ndarray::{Array2, Array3};
 
 /// Compute gradients for the transformer model's learnable weights.
 pub fn compute_gradients(
@@ -10,12 +9,12 @@ pub fn compute_gradients(
     inputs: &Array3<f32>,
     targets: &Array2<f32>,
     predictions: &Array2<f32>,
-    vocabsize : usize,
+    vocabsize: usize,
 ) -> LearnableWeights {
     let mut gradients = LearnableWeights::new(
         OUTPUT_SIZE,
         HIDDEN_SIZE,
-        vocabsize,   // Ensure the vocab size is correct
+        vocabsize, // Ensure the vocab size is correct
         D_MODEL,
         D_K,
         FFN_DIM,
@@ -60,15 +59,16 @@ pub fn compute_gradients(
     gradients
 }
 
-
-
 pub fn update_weights(
     model: &mut LearnableWeights,
     gradients: &LearnableWeights,
     learning_rate: f32,
 ) {
-
-    println!("EMBEDDING OLD :{:?}, EMBEDDING NEW: {:?}",model.embedding.shape(),gradients.embedding.shape());
+    println!(
+        "EMBEDDING OLD :{:?}, EMBEDDING NEW: {:?}",
+        model.embedding.shape(),
+        gradients.embedding.shape()
+    );
     // Ensure the gradients and model weights have compatible shapes (reshape if necessary)
     model.embedding = &model.embedding - &(&gradients.embedding * learning_rate);
     model.query_weights = &model.query_weights - &(&gradients.query_weights * learning_rate);

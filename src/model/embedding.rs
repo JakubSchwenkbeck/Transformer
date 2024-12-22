@@ -2,9 +2,8 @@
 
 use crate::math::positional_encoding::sinusoidal_pos_encoding;
 use ndarray::{s, Array, Array2, ArrayView, ArrayView2, Axis, Ix1};
-use std::cmp::Ordering;
-//use rand::Rng;
 use rand::Rng;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 pub struct Embedding {
@@ -75,20 +74,20 @@ impl Embedding {
             let similarities: Vec<f32> = self
                 .weights
                 .axis_iter(Axis(0))
-                .map(|embedding| embedding.dot(&decoded) / (norm(embedding) * norm(embedding)))
+                .map(|embedding| embedding.dot(&decoded) / (norm(embedding) * norm(decoded)))
+                .filter(|&similarity| !similarity.is_nan()) // Filter out NaNs
                 .collect();
 
             // Find the index of the maximum similarity
-            let best_match = similarities
+            if let Some((best_match, _)) = similarities
                 .iter()
                 .enumerate()
-                .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-                .unwrap()
-                .0;
-
-            // Map index to the corresponding token
-            if let Some(token) = index_to_token.get(&best_match) {
-                predicted_tokens.push(token.clone());
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
+            {
+                // Map index to the corresponding token
+                if let Some(token) = index_to_token.get(&best_match) {
+                    predicted_tokens.push(token.clone());
+                }
             }
         }
 
@@ -100,9 +99,7 @@ pub fn norm(vector: ArrayView<f32, Ix1>) -> f32 {
     vector.mapv(|x| x * x).sum().sqrt()
 }
 
-pub fn predict_index( probabilities: ArrayView2<f32>,
-                      vocab: &HashMap<String, usize>, ) -> Vec<usize>{
-
+pub fn predict_index(probabilities: ArrayView2<f32>, vocab: &HashMap<String, usize>) -> Vec<usize> {
     // Reverse the vocab to get a mapping from index to token
     let _index_to_token: HashMap<usize, String> =
         vocab.iter().map(|(k, &v)| (v, k.clone())).collect();
@@ -115,16 +112,17 @@ pub fn predict_index( probabilities: ArrayView2<f32>,
         let max_index = probs
             .iter()
             .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better NaN handling than asserting equal
+            .filter(|(_, &prob)| !prob.is_nan()) // Filter out NaNs
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
             .unwrap()
             .0;
 
-            predicted_tokens.push(max_index.clone());
-
+        predicted_tokens.push(max_index);
     }
 
     predicted_tokens
 }
+
 pub fn predict_tokens(
     probabilities: ArrayView2<f32>,
     vocab: &HashMap<String, usize>,
@@ -141,7 +139,8 @@ pub fn predict_tokens(
         let max_index = probs
             .iter()
             .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal)) // TODO : Need better NaN handling than asserting equal
+            .filter(|(_, &prob)| !prob.is_nan()) // Filter out NaNs
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
             .unwrap()
             .0;
 

@@ -1,8 +1,8 @@
 #![allow(warnings)]
 
+use crate::settings::INPUT_SIZE;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
-use crate::settings::INPUT_SIZE;
 
 #[derive(Debug)]
 pub struct Tokenizer {
@@ -65,7 +65,7 @@ impl Tokenizer {
             tokens.push(*token);
         }
 
-        tokens.push(self.vocab[&self.eos_token]);// Add EOS token at the end
+        tokens.push(self.vocab[&self.eos_token]); // Add EOS token at the end
         tokens
     }
 
@@ -91,7 +91,8 @@ impl Tokenizer {
         }
 
         padded
-    }}
+    }
+}
 
 #[cfg(test)]
 mod tests {

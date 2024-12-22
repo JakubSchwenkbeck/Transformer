@@ -24,7 +24,7 @@ fn train_model(
     learning_rate: f32,                      // Learning rate
 ) -> Vec<String> {
     let vocab_size = tokenizer.vocab.len(); // Vocabulary size
-    let mut outputs = Vec::new();           // To store outputs for progress tracking
+    let mut outputs = Vec::new(); // To store outputs for progress tracking
 
     // Loop over the number of epochs
     for epoch in 0..num_epochs {
@@ -66,10 +66,10 @@ fn train_model(
                 |(_, seq, embed)| logits[[seq, embed]],
             );
 
-            let targets = Array2::from_shape_fn(
-                (target.len(), logits.shape()[1]),
-                |(seq, embed)| logits[[seq, embed]],
-            );
+            let targets =
+                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, embed)| {
+                    logits[[seq, embed]]
+                });
 
             let predictions = logits.clone();
 
@@ -79,7 +79,7 @@ fn train_model(
                 &inputs,
                 &targets,
                 &predictions,
-                vocab_size
+                vocab_size,
             );
 
             // Update weights
@@ -101,7 +101,11 @@ fn train_model(
 
         // End of epoch: Print average loss and track improvement
         let avg_loss = total_loss / num_batches as f32;
-        println!("Epoch {} completed with average loss: {:.4}", epoch + 1, avg_loss);
+        println!(
+            "Epoch {} completed with average loss: {:.4}",
+            epoch + 1,
+            avg_loss
+        );
 
         // For debugging or tracking, we could save weights periodically here.
     }
@@ -195,10 +199,15 @@ pub fn training_model(
     // Apply final linear transformation
     let output_projection = &learnable_weights.output_projection; // All ones weights
     println!("Decoded shape: {:?}", decoded.dim());
-    println!("Flattened decoded shape: {:?}", flatten_3d_array(decoded.clone()).dim());
+    println!(
+        "Flattened decoded shape: {:?}",
+        flatten_3d_array(decoded.clone()).dim()
+    );
     println!("Output projection shape: {:?}", output_projection.dim());
-    println!("Transposed output projection shape: {:?}", output_projection.t().dim());
-
+    println!(
+        "Transposed output projection shape: {:?}",
+        output_projection.t().dim()
+    );
 
     let logits = flatten_3d_array(decoded).dot(&output_projection.to_owned()); // Linear layer
 

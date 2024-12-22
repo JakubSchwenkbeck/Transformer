@@ -1,11 +1,7 @@
 use crate::attention::softmax::softmax_vector;
 use ndarray::{s, Array1, Array2};
 
-pub fn cross_entropy_loss(
-    logits: &Array2<f32>,
-    targets: &Array1<usize>,
-    vocab_size: usize,
-) -> f32 {
+pub fn cross_entropy_loss(logits: &Array2<f32>, targets: &Array1<usize>, vocab_size: usize) -> f32 {
     let mut loss = 0.0;
 
     // Ensure that the number of targets matches the batch size
@@ -15,7 +11,10 @@ pub fn cross_entropy_loss(
     for (i, &target) in targets.iter().enumerate() {
         // Ensure target index is within valid range
         if target >= vocab_size {
-            panic!("Target index {} is out of bounds for vocab_size {}", target, vocab_size);
+            panic!(
+                "Target index {} is out of bounds for vocab_size {}",
+                target, vocab_size
+            );
         }
 
         // Get the logits for the current target (batch_size x vocab_size)

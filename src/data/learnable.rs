@@ -1,5 +1,5 @@
-use ndarray::{Array1, Array2};
 use crate::settings::*;
+use ndarray::{Array1, Array2};
 
 pub struct LearnableWeights {
     // Embedding Layer
@@ -28,7 +28,7 @@ pub struct LearnableWeights {
 impl LearnableWeights {
     pub fn new(
         output_size: usize,
-        hidden_size: usize,
+        _hidden_size: usize,
         vocab_size: usize,
         embedding_dim: usize,
         attention_dim: usize,
@@ -55,18 +55,18 @@ impl LearnableWeights {
             layer_norm_shift: vec![0.0; embedding_dim], // Initialize shift to 0
 
             // Output Layer
-            output_projection_vocab: Array2::zeros((embedding_dim, vocab_size)),
+            output_projection_vocab: Array2::zeros((embedding_dim, output_size)),
         }
     }
 }
 
 pub fn initialize_weights() -> LearnableWeights {
     LearnableWeights::new(
-        D_MODEL,      // output_size = D_MODEL
-        FFN_DIM,      // hidden_size = FFN_DIM
-        D_MODEL,      // vocab_size
-        D_MODEL,      // embedding_dim = D_MODEL
-        D_K,          // attention_dim
-        FFN_DIM,      // ffn_dim
+        D_MODEL, // output_size = D_MODEL
+        FFN_DIM, // hidden_size = FFN_DIM
+        D_MODEL, // vocab_size
+        D_MODEL, // embedding_dim = D_MODEL
+        D_K,     // attention_dim
+        FFN_DIM, // ffn_dim
     )
 }
