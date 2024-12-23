@@ -3,7 +3,7 @@ use crate::data::dataset::{gen_data, Dataset};
 use crate::data::learnable::LearnableWeights;
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
-use crate::math::linear_algebra::flatten_3d_array;
+use crate::math::linear_algebra::{apply_projection, flatten_3d_array};
 use crate::model::decoder::decoding;
 use crate::model::embedding::{predict_index, Embedding};
 use crate::model::encoder::encoding;
@@ -59,7 +59,7 @@ fn train_model(
             num_batches += 1;
 
             // Log loss and progress every 10 steps
-            if step % 100 == 0 {
+            if epoch % 100 == 0 {
                 let decoded_output = tokenizer.detokenize(out.to_vec());
                 let expected_output = tokenizer.detokenize(target.to_vec());
                 println!(
@@ -98,7 +98,7 @@ fn train_model(
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
-            if step % 100 == 0 {
+            if epoch % 100 == 0 {
                 // Log gradients for debugging (optional)
                 println!("Step {}: Computed gradients = {:?}", step, gradients);
 
@@ -136,8 +136,8 @@ pub fn train() {
     );
 
     // Define the number of epochs and learning rate
-    let num_epochs = 1000;
-    let learning_rate = 0.01;
+    let num_epochs = 10000;
+    let learning_rate = 0.001;
 
     // Train the model
     let outputs = train_model(
@@ -178,7 +178,7 @@ pub fn training_model(
     let beta = Array2::zeros((1, EMBEDDING_SIZE));
 
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer = FeedForwardLayer::new(learnable_weights, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
 
     // Perform encoding with stacked layers
     let encoded = (0..NUM_LAYERS).fold(input_tensor.clone(), |acc, _| {
@@ -203,8 +203,10 @@ pub fn training_model(
         )
     });
 
+
+
     // Apply final linear transformation
-    let logits = flatten_3d_array(decoded).dot(&learnable_weights.output_projection.to_owned());
+    let logits = flatten_3d_array(apply_projection(&decoded, &learnable_weights.output_projection.to_owned()));
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
