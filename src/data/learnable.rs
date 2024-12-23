@@ -1,6 +1,5 @@
 use crate::settings::*;
 use ndarray::{Array1, Array2};
-
 pub struct LearnableWeights {
     // Embedding Layer
     pub embedding: Array2<f32>, // (vocab_size, embedding_dim)
@@ -36,11 +35,11 @@ impl LearnableWeights {
     ) -> Self {
         LearnableWeights {
             // Embedding Layer
-            embedding: Array2::ones((vocab_size, embedding_dim)),
+            embedding: Array2::ones((vocab_size, embedding_dim)), // (vocab_size, embedding_dim)
 
             // Attention Mechanism
             query_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
-            key_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            key_weights: Array2::ones((embedding_dim, attention_dim)),   // (embedding_dim, attention_dim)
             value_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
             output_projection: Array2::ones((attention_dim, embedding_dim)), // (attention_dim, embedding_dim)
 
@@ -64,9 +63,9 @@ pub fn initialize_weights() -> LearnableWeights {
     LearnableWeights::new(
         D_MODEL, // output_size = D_MODEL
         FFN_DIM, // hidden_size = FFN_DIM
-        D_MODEL, // vocab_size
+        D_MODEL, // vocab_size (assuming this is same as embedding_dim)
         D_MODEL, // embedding_dim = D_MODEL
-        D_K,     // attention_dim
-        FFN_DIM, // ffn_dim
+        D_K,     // attention_dim = D_K
+        FFN_DIM, // ffn_dim = FFN_DIM
     )
 }

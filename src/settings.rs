@@ -4,7 +4,7 @@
 pub const EPSILON: f32 = 0.0001;
 
 // Embedding size
-pub const D_MODEL: usize = 88;
+pub const D_MODEL: usize = 88;  // Model embedding size, matching the vocab size
 
 // Attention mechanism dimensions
 pub const D_K: usize = 32; // Key/query dimension (same as D_V for simplicity)
@@ -29,7 +29,7 @@ pub const NUM_LAYERS: usize = 4; // Reduced to 4 layers for a smaller architectu
 pub const FFN_DIM: usize = 128; // Smaller FFN dimension
 
 // Hidden size (used for biases and other layer parameters)
-pub const HIDDEN_SIZE: usize = 128; // Adjusted for a smaller hidden layer size, consistent with FFN_DIM
+pub const HIDDEN_SIZE: usize = 88; // Adjusted for a smaller hidden layer size, consistent with FFN_DIM
 
 // Dropout rate and learning rate
 pub const DROPOUT_RATE: f32 = 0.1; // Dropout rate for regularization

@@ -19,6 +19,9 @@ pub fn compute_gradients(
         FFN_DIM, // ffn_dim
     );
 
+    // Ensure correct shapes before proceeding with the gradients computation
+    println!("input shape: {:?}", inputs.shape());
+
     // Compute the loss and its derivative
     let loss = predictions - targets;
     let d_loss = &loss * 2.0 / (BATCH_SIZE as f32);
@@ -27,26 +30,42 @@ pub fn compute_gradients(
     gradients.output_projection_vocab = predictions.t().dot(&d_loss);
 
     // Flattened inputs for further computations
-    let flattened_inputs = flatten_3d_array(inputs.clone());
+    let flattened_inputs = flatten_3d_array(inputs.clone()); // Flatten [1, 88, 88] -> [88, 88]
+    println!("Shape of flattened_inputs: {:?}", flattened_inputs.shape());
 
     // Compute gradients for the feedforward network weights
-    let d_linear2 = d_loss.dot(&weights.linear2_weights.t());
-    gradients.linear2_weights = flattened_inputs.t().dot(&d_linear2);
-    gradients.bias2 = d_linear2.sum_axis(ndarray::Axis(0));
+    // d_linear2 corresponds to the gradient w.r.t. the second linear layer
+    let d_linear2 = d_loss.dot(&weights.linear2_weights.t()); // Shape: [88, 128]
+    gradients.linear2_weights = flattened_inputs.t().dot(&d_linear2); // Shape: [88, 128]
+    gradients.bias2 = d_linear2.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
+    println!("Shape of d_linear2: {:?}", d_linear2.shape());
 
-    let d_linear1 = d_linear2.dot(&weights.linear1_weights.t());
-    gradients.linear1_weights = flattened_inputs.t().dot(&d_linear1);
-    gradients.bias1 = d_linear1.sum_axis(ndarray::Axis(0));
+    // d_linear1 corresponds to the gradient w.r.t. the first linear layer
+    let d_linear1 = d_linear2.dot(&weights.linear1_weights.t()); // Shape: [88, 88]
+    println!("Shape of d_linear1: {:?}", d_linear1.shape());
+
+    gradients.linear1_weights = flattened_inputs.t().dot(&d_linear1); // Shape: [88, 128] (for linear1)
+    gradients.bias1 = d_linear1.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
+
+    println!("Shape of linear1_weights: {:?}", weights.linear1_weights.shape());
+    println!(
+        "Dot product inputs: {:?} and {:?}",
+        flattened_inputs.shape(),
+        d_linear1.shape()
+    );
 
     // Compute gradients for the attention mechanism weights
-    let d_attention_output = d_loss.dot(&weights.output_projection.t());
-    gradients.output_projection = flattened_inputs.t().dot(&d_attention_output);
-    let d_value = d_attention_output.dot(&weights.value_weights.t());
-    gradients.value_weights = flattened_inputs.t().dot(&d_value);
-    let d_key = d_attention_output.dot(&weights.key_weights.t());
-    gradients.key_weights = flattened_inputs.t().dot(&d_key);
-    let d_query = d_attention_output.dot(&weights.query_weights.t());
-    gradients.query_weights = flattened_inputs.t().dot(&d_query);
+    let d_attention_output = d_loss.dot(&weights.output_projection.t()); // Shape: [88, 88]
+    gradients.output_projection = flattened_inputs.t().dot(&d_attention_output); // Shape: [88, 88]
+
+    let d_value = d_attention_output.dot(&weights.value_weights.t()); // Shape: [88, 88]
+    gradients.value_weights = flattened_inputs.t().dot(&d_value); // Shape: [88, 88]
+
+    let d_key = d_attention_output.dot(&weights.key_weights.t()); // Shape: [88, 88]
+    gradients.key_weights = flattened_inputs.t().dot(&d_key); // Shape: [88, 88]
+
+    let d_query = d_attention_output.dot(&weights.query_weights.t()); // Shape: [88, 88]
+    gradients.query_weights = flattened_inputs.t().dot(&d_query); // Shape: [88, 88]
 
     // Compute gradients for the embedding layer
     gradients.embedding = inputs.mean_axis(ndarray::Axis(0)).unwrap(); // Ensure shape consistency with model.embedding
@@ -57,6 +76,7 @@ pub fn compute_gradients(
 
     gradients
 }
+
 
 pub fn update_weights(
     model: &mut LearnableWeights,

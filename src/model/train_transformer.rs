@@ -101,8 +101,6 @@ fn train_model(
             epoch + 1,
             avg_loss
         );
-
-        // For debugging or tracking, we could save weights periodically here.
     }
 
     println!("\nTraining completed!");
@@ -159,6 +157,9 @@ pub fn training_model(
         |(_, seq, embed)| embeddings[[seq, embed]],
     );
 
+    // Debugging: Print shape of input tensor
+    println!("Input tensor shape: {:?}", input_tensor.shape());
+
     // Initialize gamma and beta for layer normalization
     let gamma = Array2::ones((1, EMBEDDING_SIZE)); // Example gamma (scale parameter)
     let beta = Array2::zeros((1, EMBEDDING_SIZE)); // Example beta (shift parameter)
@@ -178,6 +179,9 @@ pub fn training_model(
         );
     }
 
+    // Debugging: Print shape after encoding
+    println!("Encoded shape: {:?}", encoded.shape());
+
     // Perform decoding with N stacked layers
     let mut decoded = input_tensor.clone();
     for _ in 0..NUM_LAYERS {
@@ -191,23 +195,28 @@ pub fn training_model(
         );
     }
 
+    // Debugging: Print shape after decoding
+    println!("Decoded shape: {:?}", decoded.shape());
+
     // Apply final linear transformation
     let output_projection = &learnable_weights.output_projection; // All ones weights
-    println!("Decoded shape: {:?}", decoded.dim());
+    println!("Decoded shape: {:?}", decoded.shape());
     println!(
         "Flattened decoded shape: {:?}",
-        flatten_3d_array(decoded.clone()).dim()
+        flatten_3d_array(decoded.clone()).shape()
     );
-    println!("Output projection shape: {:?}", output_projection.dim());
+    println!("Output projection shape: {:?}", output_projection.shape());
     println!(
         "Transposed output projection shape: {:?}",
-        output_projection.t().dim()
+        output_projection.t().shape()
     );
 
     let logits = flatten_3d_array(decoded).dot(&output_projection.to_owned()); // Linear layer
+    println!("Logits shape: {:?}", logits.shape());
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
+    println!("Softmax probabilities shape: {:?}", probabilities.shape());
 
     // Convert probabilities back to text using the tokenizer
     let tokens = predict_index(probabilities.view(), &vocab);
