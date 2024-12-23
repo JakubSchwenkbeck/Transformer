@@ -1,5 +1,6 @@
 use crate::settings::*;
 use ndarray::{Array1, Array2};
+#[derive(Debug)]
 pub struct LearnableWeights {
     // Embedding Layer
     pub embedding: Array2<f32>, // (vocab_size, embedding_dim)
@@ -39,7 +40,7 @@ impl LearnableWeights {
 
             // Attention Mechanism
             query_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
-            key_weights: Array2::ones((embedding_dim, attention_dim)),   // (embedding_dim, attention_dim)
+            key_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
             value_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
             output_projection: Array2::ones((attention_dim, embedding_dim)), // (attention_dim, embedding_dim)
 

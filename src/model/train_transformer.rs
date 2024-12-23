@@ -1,24 +1,22 @@
-#![allow(warnings)]
-use crate::attention::softmax::{softmax_matrix, softmax_vec, softmax_vector};
+use crate::attention::softmax::softmax_matrix;
 use crate::data::dataset::{gen_data, Dataset};
-use crate::data::learnable::{initialize_weights, LearnableWeights};
+use crate::data::learnable::LearnableWeights;
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::flatten_3d_array;
 use crate::model::decoder::decoding;
-use crate::model::embedding::{predict_index, predict_tokens, Embedding};
+use crate::model::embedding::{predict_index, Embedding};
 use crate::model::encoder::encoding;
 use crate::settings::*;
 use crate::training::loss_function::cross_entropy_loss;
 use crate::training::train::{compute_gradients, update_weights};
 use ndarray::{Array1, Array2, Array3};
 use rand::prelude::SliceRandom;
-use rand::Rng;
 use std::collections::HashMap;
 
 fn train_model(
     dataset: &Dataset,                       // The training data
-    tokenizer: Tokenizer,                    // Vocabulary
+    tokenizer: &Tokenizer,                   // Vocabulary
     mut learnable_weights: LearnableWeights, // Initial weights
     num_epochs: usize,                       // Number of training epochs
     learning_rate: f32,                      // Learning rate
@@ -32,7 +30,7 @@ fn train_model(
 
         // Shuffle the dataset indices
         let mut data_indices: Vec<usize> = (0..dataset.inputs.len()).collect();
-        data_indices.shuffle(&mut rand::thread_rng());
+        data_indices.shuffle(&mut rand::rng());
 
         let mut total_loss = 0.0; // Accumulate loss for this epoch
         let mut num_batches = 0;
@@ -43,7 +41,7 @@ fn train_model(
             let target = &dataset.targets[idx];
 
             // Convert to Array1 for processing
-            let input_seq = Array1::from(input.clone());
+            let _input_seq = Array1::from(input.clone());
             let target_seq = Array1::from(target.clone());
 
             // Forward pass: Model prediction
@@ -60,7 +58,16 @@ fn train_model(
             total_loss += loss; // Accumulate loss for averaging
             num_batches += 1;
 
-            // Prepare inputs, targets, and predictions for gradient computation
+            // Log loss and progress every 10 steps
+            if step % 100 == 0 {
+                let decoded_output = tokenizer.detokenize(out.to_vec());
+                let expected_output = tokenizer.detokenize(target.to_vec());
+                println!(
+                    "Step {}: Loss = {:.4}, Output = {:?}, Expected = {:?}",
+                    step, loss, decoded_output, expected_output
+                );
+                outputs.push(decoded_output);
+            }
             let inputs = Array3::from_shape_fn(
                 (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
                 |(_, seq, embed)| logits[[seq, embed]],
@@ -73,25 +80,23 @@ fn train_model(
 
             let predictions = logits.clone();
 
-            // Backward pass: Compute gradients
+            // Compute gradients
             let gradients =
                 compute_gradients(&mut learnable_weights, &inputs, &targets, &predictions);
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
 
-            // Periodically log training progress
-            if step % 10 == 0 {
-                let decoded_output = tokenizer.detokenize(out.to_vec());
-                println!(
-                    "Step {}: Loss = {:.4}, Output = {:?}, Expected = {:?}",
-                    step,
-                    loss,
-                    decoded_output,
-                    tokenizer.detokenize(target.to_vec())
-                );
-                outputs.push(decoded_output);
-            }
+            // Log gradients for debugging (optional)
+            println!("Step {}: Computed gradients = {:?}", step, gradients);
+
+            // Update weights
+
+            // Periodically log weight updates (optional)
+            println!(
+                "Step {}: Weights updated with learning rate = {:.6}",
+                step, learning_rate
+            );
         }
 
         // End of epoch: Print average loss and track improvement
@@ -126,7 +131,7 @@ pub fn train() {
     // Train the model
     let outputs = train_model(
         &dataset,
-        tokenizer,
+        &tokenizer,
         learnable_weights,
         num_epochs,
         learning_rate,
@@ -139,17 +144,17 @@ pub fn train() {
 }
 
 pub fn training_model(
-    tokens: &Vec<usize>,
-    target_seq: Array1<usize>,
-    learnable_weights: &mut LearnableWeights,
-    vocab_size: usize,
-    vocab: HashMap<String, usize>,
+    tokens: &[usize],                         // Input tokens
+    _target_seq: Array1<usize>,               // Target sequence
+    learnable_weights: &mut LearnableWeights, // Learnable weights
+    vocab_size: usize,                        // Vocabulary size
+    vocab: HashMap<String, usize>,            // Vocabulary map
 ) -> (Vec<usize>, Array2<f32>) {
     // Initialize Tokenizer and Embedding layer
-    let embedding = Embedding::new(vocab_size, EMBEDDING_SIZE); // Initialize embedding layer
+    let embedding = Embedding::new(vocab_size, EMBEDDING_SIZE);
 
     // Embed the input sentence
-    let embeddings = embedding.forward(tokens.clone());
+    let embeddings = embedding.forward(tokens.to_vec());
 
     // Convert embeddings to Array3 (batch_size, seq_length, embed_size)
     let input_tensor = Array3::from_shape_fn(
@@ -157,69 +162,47 @@ pub fn training_model(
         |(_, seq, embed)| embeddings[[seq, embed]],
     );
 
-    // Debugging: Print shape of input tensor
-    println!("Input tensor shape: {:?}", input_tensor.shape());
-
     // Initialize gamma and beta for layer normalization
-    let gamma = Array2::ones((1, EMBEDDING_SIZE)); // Example gamma (scale parameter)
-    let beta = Array2::zeros((1, EMBEDDING_SIZE)); // Example beta (shift parameter)
+    let gamma = Array2::ones((1, EMBEDDING_SIZE));
+    let beta = Array2::zeros((1, EMBEDDING_SIZE));
 
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(learnable_weights, DROPOUT_RATE);
 
-    // Perform encoding with N stacked layers
-    let mut encoded = input_tensor.clone();
-    for _ in 0..NUM_LAYERS {
-        encoded = encoding(
-            encoded,
+    // Perform encoding with stacked layers
+    let encoded = (0..NUM_LAYERS).fold(input_tensor.clone(), |acc, _| {
+        encoding(
+            acc,
             gamma.clone(),
             beta.clone(),
             EPSILON,
             &feed_forward_layer,
-        );
-    }
+        )
+    });
 
-    // Debugging: Print shape after encoding
-    println!("Encoded shape: {:?}", encoded.shape());
-
-    // Perform decoding with N stacked layers
-    let mut decoded = input_tensor.clone();
-    for _ in 0..NUM_LAYERS {
-        decoded = decoding(
-            decoded,
+    // Perform decoding with stacked layers
+    let decoded = (0..NUM_LAYERS).fold(input_tensor.clone(), |acc, _| {
+        decoding(
+            acc,
             encoded.clone(),
             gamma.clone(),
             beta.clone(),
             EPSILON,
             &feed_forward_layer,
-        );
-    }
-
-    // Debugging: Print shape after decoding
-    println!("Decoded shape: {:?}", decoded.shape());
+        )
+    });
 
     // Apply final linear transformation
-    let output_projection = &learnable_weights.output_projection; // All ones weights
-    println!("Decoded shape: {:?}", decoded.shape());
-    println!(
-        "Flattened decoded shape: {:?}",
-        flatten_3d_array(decoded.clone()).shape()
-    );
-    println!("Output projection shape: {:?}", output_projection.shape());
-    println!(
-        "Transposed output projection shape: {:?}",
-        output_projection.t().shape()
-    );
-
-    let logits = flatten_3d_array(decoded).dot(&output_projection.to_owned()); // Linear layer
-    println!("Logits shape: {:?}", logits.shape());
+    let logits = flatten_3d_array(decoded).dot(&learnable_weights.output_projection.to_owned());
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
-    println!("Softmax probabilities shape: {:?}", probabilities.shape());
 
     // Convert probabilities back to text using the tokenizer
     let tokens = predict_index(probabilities.view(), &vocab);
 
-    (tokens, logits.clone())
+    // Optionally print logits for debugging
+    println!("Logits: {:?}", logits);
+
+    (tokens, logits)
 }

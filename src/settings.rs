@@ -4,7 +4,7 @@
 pub const EPSILON: f32 = 0.0001;
 
 // Embedding size
-pub const D_MODEL: usize = 88;  // Model embedding size, matching the vocab size
+pub const D_MODEL: usize = 88; // Model embedding size, matching the vocab size
 
 // Attention mechanism dimensions
 pub const D_K: usize = 32; // Key/query dimension (same as D_V for simplicity)

@@ -19,9 +19,6 @@ pub fn compute_gradients(
         FFN_DIM, // ffn_dim
     );
 
-    // Ensure correct shapes before proceeding with the gradients computation
-    println!("input shape: {:?}", inputs.shape());
-
     // Compute the loss and its derivative
     let loss = predictions - targets;
     let d_loss = &loss * 2.0 / (BATCH_SIZE as f32);
@@ -31,28 +28,18 @@ pub fn compute_gradients(
 
     // Flattened inputs for further computations
     let flattened_inputs = flatten_3d_array(inputs.clone()); // Flatten [1, 88, 88] -> [88, 88]
-    println!("Shape of flattened_inputs: {:?}", flattened_inputs.shape());
 
     // Compute gradients for the feedforward network weights
     // d_linear2 corresponds to the gradient w.r.t. the second linear layer
     let d_linear2 = d_loss.dot(&weights.linear2_weights.t()); // Shape: [88, 128]
     gradients.linear2_weights = flattened_inputs.t().dot(&d_linear2); // Shape: [88, 128]
     gradients.bias2 = d_linear2.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
-    println!("Shape of d_linear2: {:?}", d_linear2.shape());
 
     // d_linear1 corresponds to the gradient w.r.t. the first linear layer
     let d_linear1 = d_linear2.dot(&weights.linear1_weights.t()); // Shape: [88, 88]
-    println!("Shape of d_linear1: {:?}", d_linear1.shape());
 
     gradients.linear1_weights = flattened_inputs.t().dot(&d_linear1); // Shape: [88, 128] (for linear1)
     gradients.bias1 = d_linear1.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
-
-    println!("Shape of linear1_weights: {:?}", weights.linear1_weights.shape());
-    println!(
-        "Dot product inputs: {:?} and {:?}",
-        flattened_inputs.shape(),
-        d_linear1.shape()
-    );
 
     // Compute gradients for the attention mechanism weights
     let d_attention_output = d_loss.dot(&weights.output_projection.t()); // Shape: [88, 88]
@@ -77,7 +64,6 @@ pub fn compute_gradients(
     gradients
 }
 
-
 pub fn update_weights(
     model: &mut LearnableWeights,
     gradients: &LearnableWeights,
@@ -90,14 +76,6 @@ pub fn update_weights(
     model.value_weights = &model.value_weights - &(&gradients.value_weights * learning_rate);
     model.output_projection =
         &model.output_projection - &(&gradients.output_projection * learning_rate);
-
-    println!(
-        "lin1 OLD :{:?}, lin1 NEW: {:?}",
-        model.linear1_weights.shape(),
-        gradients.linear1_weights.shape()
-    );
-
-    // TODO DEBUG SHAPE issues (old 88,128 and new 88,88 which seems wrong)
 
     model.linear1_weights = &model.linear1_weights - &(&gradients.linear1_weights * learning_rate);
     model.linear2_weights = &model.linear2_weights - &(&gradients.linear2_weights * learning_rate);
