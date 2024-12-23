@@ -1,4 +1,3 @@
-use Transformer::data::generation::example_gen;
 use Transformer::data::tokenizer::Tokenizer;
 use Transformer::example::example;
 use Transformer::model::train_transformer::train;
@@ -74,7 +73,7 @@ fn main() {
 
     println!("Predicted Token: {:?}", predicted_token);
 
-    example_gen();
+    //example_gen();
 
     train()
 }

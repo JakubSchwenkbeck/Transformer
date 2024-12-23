@@ -1,7 +1,8 @@
 use crate::data::learnable::LearnableWeights;
 use crate::math::linear_algebra::flatten_3d_array;
 use crate::settings::*;
-use ndarray::{Array2, Array3};
+use ndarray::{Array1, Array2, Array3};
+use crate::training::loss_function::cross_entropy_loss;
 
 /// Compute gradients for the transformer model's learnable weights.
 pub fn compute_gradients(
@@ -20,14 +21,28 @@ pub fn compute_gradients(
     );
 
     // Compute the loss and its derivative
+
+   // println!("PRED : {:?}",predictions);
+   // println!("TARGET : {:?}",targets);
+
+
     let loss = predictions - targets;
-    let d_loss = &loss * 2.0 / (BATCH_SIZE as f32);
+    let d_loss = 0.0001 * &loss * 2.0 / (BATCH_SIZE as f32);
+    // Debugging: Print loss and its derivative
+
+  //  println!("Derivative of loss (d_loss): {:?}", d_loss);
 
     // Compute gradients for the output projection weights
     gradients.output_projection_vocab = predictions.t().dot(&d_loss);
 
+    // Debugging: Print the output projection gradient
+  //  println!("Gradient for output_projection_vocab: {:?}", gradients.output_projection_vocab);
+
     // Flattened inputs for further computations
     let flattened_inputs = flatten_3d_array(inputs.clone()); // Flatten [1, 88, 88] -> [88, 88]
+
+    // Debugging: Print flattened inputs
+   // println!("Flattened inputs: {:?}", flattened_inputs);
 
     // Compute gradients for the feedforward network weights
     // d_linear2 corresponds to the gradient w.r.t. the second linear layer
@@ -35,34 +50,63 @@ pub fn compute_gradients(
     gradients.linear2_weights = flattened_inputs.t().dot(&d_linear2); // Shape: [88, 128]
     gradients.bias2 = d_linear2.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
 
+    // Debugging: Print the gradient for the second linear layer
+   // println!("Gradient for linear2_weights: {:?}", gradients.linear2_weights);
+   // println!("Bias2 gradient: {:?}", gradients.bias2);
+
     // d_linear1 corresponds to the gradient w.r.t. the first linear layer
     let d_linear1 = d_linear2.dot(&weights.linear1_weights.t()); // Shape: [88, 88]
 
     gradients.linear1_weights = flattened_inputs.t().dot(&d_linear1); // Shape: [88, 128] (for linear1)
     gradients.bias1 = d_linear1.sum_axis(ndarray::Axis(0)); // Sum across sequences to get bias gradient
 
+    // Debugging: Print the gradient for the first linear layer
+   // println!("Gradient for linear1_weights: {:?}", gradients.linear1_weights);
+   // println!("Bias1 gradient: {:?}", gradients.bias1);
+
     // Compute gradients for the attention mechanism weights
     let d_attention_output = d_loss.dot(&weights.output_projection.t()); // Shape: [88, 88]
     gradients.output_projection = flattened_inputs.t().dot(&d_attention_output); // Shape: [88, 88]
 
+    // Debugging: Print attention output gradients
+   // println!("Gradient for output_projection: {:?}", gradients.output_projection);
+
     let d_value = d_attention_output.dot(&weights.value_weights.t()); // Shape: [88, 88]
     gradients.value_weights = flattened_inputs.t().dot(&d_value); // Shape: [88, 88]
+
+    // Debugging: Print value weights gradient
+   // println!("Gradient for value_weights: {:?}", gradients.value_weights);
 
     let d_key = d_attention_output.dot(&weights.key_weights.t()); // Shape: [88, 88]
     gradients.key_weights = flattened_inputs.t().dot(&d_key); // Shape: [88, 88]
 
+    // Debugging: Print key weights gradient
+   // println!("Gradient for key_weights: {:?}", gradients.key_weights);
+
     let d_query = d_attention_output.dot(&weights.query_weights.t()); // Shape: [88, 88]
     gradients.query_weights = flattened_inputs.t().dot(&d_query); // Shape: [88, 88]
 
+    // Debugging: Print query weights gradient
+   // println!("Gradient for query_weights: {:?}", gradients.query_weights);
+
     // Compute gradients for the embedding layer
     gradients.embedding = inputs.mean_axis(ndarray::Axis(0)).unwrap(); // Ensure shape consistency with model.embedding
+
+    // Debugging: Print embedding gradients
+   // println!("Embedding gradients: {:?}", gradients.embedding);
 
     // Compute gradients for layer normalization parameters (scale and shift)
     gradients.layer_norm_scale = d_linear1.mean_axis(ndarray::Axis(0)).unwrap().to_vec();
     gradients.layer_norm_shift = d_linear1.sum_axis(ndarray::Axis(0)).to_vec();
 
+    // Debugging: Print layer norm gradients
+  //  println!("Layer norm scale gradient: {:?}", gradients.layer_norm_scale);
+   // println!("Layer norm shift gradient: {:?}", gradients.layer_norm_shift);
+
     gradients
 }
+
+
 
 pub fn update_weights(
     model: &mut LearnableWeights,

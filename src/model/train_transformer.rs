@@ -67,36 +67,47 @@ fn train_model(
                     step, loss, decoded_output, expected_output
                 );
                 outputs.push(decoded_output);
+                let num_matches = out.iter()
+                    .zip(target.iter())  // Pair elements of out and target
+                    .filter(|(o, t)| o == t)  // Keep only the pairs where the elements are equal
+                    .count();  // Count the number of matches
+
+                // Calculate the percentage of matching elements
+                let total_elements = out.len();
+                let percentage = (num_matches as f32 / total_elements as f32) * 100.0;
+
+                // Print the result
+                println!("Percentage of equal elements: {:.2}%", percentage);
             }
             let inputs = Array3::from_shape_fn(
                 (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
                 |(_, seq, embed)| logits[[seq, embed]],
             );
 
-            let targets =
-                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, embed)| {
-                    logits[[seq, embed]]
-                });
+            // Now, targets should come from the actual target sequence (target_seq)
+            let targets = Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, embed)| {
+                target_seq[seq] as f32  // Correctly use target_seq here
+            });
 
             let predictions = logits.clone();
-
+            let transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
             let gradients =
-                compute_gradients(&mut learnable_weights, &inputs, &targets, &predictions);
+                compute_gradients(&mut learnable_weights, &inputs, &targets, &transformed);
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
+            if step % 100 == 0 {
 
-            // Log gradients for debugging (optional)
-            println!("Step {}: Computed gradients = {:?}", step, gradients);
+                // Log gradients for debugging (optional)
+                println!("Step {}: Computed gradients = {:?}", step, gradients);
 
-            // Update weights
-
-            // Periodically log weight updates (optional)
-            println!(
-                "Step {}: Weights updated with learning rate = {:.6}",
-                step, learning_rate
-            );
+                // Periodically log weight updates (optional)
+                println!(
+                    "Step {}: Weights updated with learning rate = {:.6}",
+                    step, learning_rate
+                );
+            }
         }
 
         // End of epoch: Print average loss and track improvement
@@ -125,8 +136,8 @@ pub fn train() {
     );
 
     // Define the number of epochs and learning rate
-    let num_epochs = 10;
-    let learning_rate = 0.001;
+    let num_epochs = 1000;
+    let learning_rate = 0.01;
 
     // Train the model
     let outputs = train_model(
@@ -202,7 +213,18 @@ pub fn training_model(
     let tokens = predict_index(probabilities.view(), &vocab);
 
     // Optionally print logits for debugging
-    println!("Logits: {:?}", logits);
+    //println!("Logits: {:?}", logits);
 
     (tokens, logits)
 }
+fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
+    let repeat_count = input.len();  // The number of columns (same as the number of rows in the input)
+
+    // Create a 2D array where each row is filled with the corresponding index from the input
+    let data: Vec<Vec<f32>> = input.iter().map(|&idx| vec![idx as f32; repeat_count]).collect();
+
+    // Convert the Vec<Vec<usize>> into a 2D Array2
+    Array2::from_shape_vec((repeat_count, repeat_count), data.into_iter().flatten().collect()).unwrap()
+}
+
+
