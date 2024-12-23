@@ -67,10 +67,11 @@ fn train_model(
                     step, loss, decoded_output, expected_output
                 );
                 outputs.push(decoded_output);
-                let num_matches = out.iter()
-                    .zip(target.iter())  // Pair elements of out and target
-                    .filter(|(o, t)| o == t)  // Keep only the pairs where the elements are equal
-                    .count();  // Count the number of matches
+                let num_matches = out
+                    .iter()
+                    .zip(target.iter()) // Pair elements of out and target
+                    .filter(|(o, t)| o == t) // Keep only the pairs where the elements are equal
+                    .count(); // Count the number of matches
 
                 // Calculate the percentage of matching elements
                 let total_elements = out.len();
@@ -85,11 +86,11 @@ fn train_model(
             );
 
             // Now, targets should come from the actual target sequence (target_seq)
-            let targets = Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, embed)| {
-                target_seq[seq] as f32  // Correctly use target_seq here
-            });
+            let targets =
+                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, _embed)| {
+                    target_seq[seq] as f32 // Correctly use target_seq here
+                });
 
-            let predictions = logits.clone();
             let transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
             let gradients =
@@ -98,7 +99,6 @@ fn train_model(
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
             if step % 100 == 0 {
-
                 // Log gradients for debugging (optional)
                 println!("Step {}: Computed gradients = {:?}", step, gradients);
 
@@ -218,13 +218,18 @@ pub fn training_model(
     (tokens, logits)
 }
 fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
-    let repeat_count = input.len();  // The number of columns (same as the number of rows in the input)
+    let repeat_count = input.len(); // The number of columns (same as the number of rows in the input)
 
     // Create a 2D array where each row is filled with the corresponding index from the input
-    let data: Vec<Vec<f32>> = input.iter().map(|&idx| vec![idx as f32; repeat_count]).collect();
+    let data: Vec<Vec<f32>> = input
+        .iter()
+        .map(|&idx| vec![idx as f32; repeat_count])
+        .collect();
 
     // Convert the Vec<Vec<usize>> into a 2D Array2
-    Array2::from_shape_vec((repeat_count, repeat_count), data.into_iter().flatten().collect()).unwrap()
+    Array2::from_shape_vec(
+        (repeat_count, repeat_count),
+        data.into_iter().flatten().collect(),
+    )
+    .unwrap()
 }
-
-
