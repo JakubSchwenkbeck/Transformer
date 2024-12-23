@@ -1,6 +1,6 @@
 use crate::settings::*;
 use ndarray::{Array1, Array2};
-
+#[derive(Debug)]
 pub struct LearnableWeights {
     // Embedding Layer
     pub embedding: Array2<f32>, // (vocab_size, embedding_dim)
@@ -14,8 +14,8 @@ pub struct LearnableWeights {
     // Feedforward Network
     pub linear1_weights: Array2<f32>, // (embedding_dim, ffn_dim)
     pub linear2_weights: Array2<f32>, // (ffn_dim, embedding_dim)
-    pub bias1: Array1<f32>,
-    pub bias2: Array1<f32>,
+    pub bias1: Array1<f32>,           // (ffn_dim)
+    pub bias2: Array1<f32>,           // (embedding_dim)
 
     // Layer Normalization
     pub layer_norm_scale: Vec<f32>, // (embedding_dim,)
@@ -28,7 +28,7 @@ pub struct LearnableWeights {
 impl LearnableWeights {
     pub fn new(
         output_size: usize,
-        hidden_size: usize,
+        _hidden_size: usize,
         vocab_size: usize,
         embedding_dim: usize,
         attention_dim: usize,
@@ -36,36 +36,37 @@ impl LearnableWeights {
     ) -> Self {
         LearnableWeights {
             // Embedding Layer
-            embedding: Array2::ones((vocab_size, embedding_dim)),
+            embedding: Array2::ones((vocab_size, embedding_dim)), // (vocab_size, embedding_dim)
 
             // Attention Mechanism
-            query_weights: Array2::ones((embedding_dim, attention_dim)),
-            key_weights: Array2::ones((embedding_dim, attention_dim)),
-            value_weights: Array2::ones((embedding_dim, attention_dim)),
-            output_projection: Array2::ones((attention_dim, embedding_dim)),
+            query_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            key_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            value_weights: Array2::ones((embedding_dim, attention_dim)), // (embedding_dim, attention_dim)
+            output_projection: Array2::ones((attention_dim, embedding_dim)), // (attention_dim, embedding_dim)
 
             // Feedforward Network
-            linear1_weights: Array2::ones((embedding_dim, ffn_dim)),
-            linear2_weights: Array2::ones((ffn_dim, embedding_dim)),
-            bias1: Array1::zeros(hidden_size),
-            bias2: Array1::zeros(output_size),
+            linear1_weights: Array2::ones((embedding_dim, ffn_dim)), // (embedding_dim, ffn_dim)
+            linear2_weights: Array2::ones((ffn_dim, embedding_dim)), // (ffn_dim, embedding_dim)
+            bias1: Array1::zeros(ffn_dim),                           // (ffn_dim)
+            bias2: Array1::zeros(embedding_dim),                     // (embedding_dim)
 
             // Layer Normalization
-            layer_norm_scale: vec![1.0; embedding_dim], // Initialize scale to 1
-            layer_norm_shift: vec![0.0; embedding_dim], // Initialize shift to 0
+            layer_norm_scale: vec![1.0; embedding_dim], // Initialize scale to 1 (embedding_dim,)
+            layer_norm_shift: vec![0.0; embedding_dim], // Initialize shift to 0 (embedding_dim,)
 
             // Output Layer
-            output_projection_vocab: Array2::zeros((embedding_dim, vocab_size)),
+            output_projection_vocab: Array2::zeros((embedding_dim, output_size)), // (embedding_dim, vocab_size)
         }
     }
 }
+
 pub fn initialize_weights() -> LearnableWeights {
     LearnableWeights::new(
-        OUTPUT_SIZE, // output_size
-        HIDDEN_SIZE, // hidden_size
-        D_MODEL,     // vocab_size
-        D_MODEL,     // embedding_dim
-        D_K,         // attention_dim (for keys, queries)
-        D_V,         // ffn_dim (could align with embedding_dim or specific)
+        D_MODEL, // output_size = D_MODEL
+        FFN_DIM, // hidden_size = FFN_DIM
+        D_MODEL, // vocab_size (assuming this is same as embedding_dim)
+        D_MODEL, // embedding_dim = D_MODEL
+        D_K,     // attention_dim = D_K
+        FFN_DIM, // ffn_dim = FFN_DIM
     )
 }

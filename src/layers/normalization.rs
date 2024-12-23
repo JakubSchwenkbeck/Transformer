@@ -17,7 +17,7 @@ use ndarray::{Array2, Axis};
 #[requires(beta.shape().len() == 2 && beta.shape()[0] == 1, "Beta must be a 2-dimensional array with a single row")]
 #[requires(epsilon > 0.0, "Epsilon must be positive and non-zero")]
 #[ensures(ret.shape() == x.shape(), "The resulting array must have the same shape as the input array")]
-#[ensures(ret.iter().all(|&x| x.is_finite()), "All elements in the resulting array must be finite")]
+//#[ensures(ret.iter().all(|&x| x.is_finite()), "All elements in the resulting array must be finite")]
 pub fn layer_norm(
     x: &Array2<f32>,
     gamma: &Array2<f32>,

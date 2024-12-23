@@ -8,6 +8,7 @@ use crate::model::decoder::decoding;
 use crate::model::embedding::{predict_tokens, Embedding};
 use crate::model::encoder::encoding;
 use crate::settings::*;
+use crate::training::loss_function::cross_entropy_loss;
 use ndarray::{Array1, Array2, Array3};
 use rand::Rng;
 use std::collections::HashMap;
@@ -73,6 +74,13 @@ pub fn transformer_model(
     // Apply final linear transformation
     let output_projection = Array2::ones((OUTPUT_SIZE, tokenizer.vocab.len())); // All ones weights
     let logits = flatten_3d_array(decoded).dot(&output_projection); // Linear layer
+
+    /*
+    let targets = Array1::from(vec![1, 2, 3]);
+    let loss = cross_entropy_loss(&logits.clone(), &targets,5);
+    println!("LOSS: {:?}", loss);
+
+     */
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);

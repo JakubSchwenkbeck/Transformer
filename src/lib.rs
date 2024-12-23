@@ -3,6 +3,10 @@
 pub mod example;
 pub mod settings;
 
+pub mod training {
+    pub mod loss_function;
+    pub mod train;
+}
 pub mod data {
     pub mod dataset;
     pub mod generation;
@@ -14,6 +18,7 @@ pub mod model {
     pub mod decoder;
     pub mod embedding;
     pub mod encoder;
+    pub mod train_transformer;
     pub mod transformer_model;
 }
 
