@@ -3,7 +3,7 @@ use crate::data::dataset::{gen_data, Dataset};
 use crate::data::learnable::LearnableWeights;
 use crate::data::tokenizer::Tokenizer;
 use crate::layers::feedforward_layer::FeedForwardLayer;
-use crate::math::linear_algebra::flatten_3d_array;
+use crate::math::linear_algebra::{apply_projection, flatten_3d_array};
 use crate::model::decoder::decoding;
 use crate::model::embedding::{predict_index, Embedding};
 use crate::model::encoder::encoding;
@@ -59,7 +59,7 @@ fn train_model(
             num_batches += 1;
 
             // Log loss and progress every 10 steps
-            if step % 100 == 0 {
+            if epoch % 100 == 0 {
                 let decoded_output = tokenizer.detokenize(out.to_vec());
                 let expected_output = tokenizer.detokenize(target.to_vec());
                 println!(
@@ -67,36 +67,47 @@ fn train_model(
                     step, loss, decoded_output, expected_output
                 );
                 outputs.push(decoded_output);
+                let num_matches = out
+                    .iter()
+                    .zip(target.iter()) // Pair elements of out and target
+                    .filter(|(o, t)| o == t) // Keep only the pairs where the elements are equal
+                    .count(); // Count the number of matches
+
+                // Calculate the percentage of matching elements
+                let total_elements = out.len();
+                let percentage = (num_matches as f32 / total_elements as f32) * 100.0;
+
+                // Print the result
+                println!("Percentage of equal elements: {:.2}%", percentage);
             }
             let inputs = Array3::from_shape_fn(
                 (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
                 |(_, seq, embed)| logits[[seq, embed]],
             );
 
+            // Now, targets should come from the actual target sequence (target_seq)
             let targets =
-                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, embed)| {
-                    logits[[seq, embed]]
+                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, _embed)| {
+                    target_seq[seq] as f32 // Correctly use target_seq here
                 });
 
-            let predictions = logits.clone();
-
+            let transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
             let gradients =
-                compute_gradients(&mut learnable_weights, &inputs, &targets, &predictions);
+                compute_gradients(&mut learnable_weights, &inputs, &targets, &transformed);
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
+            if epoch % 100 == 0 {
+                // Log gradients for debugging (optional)
+                println!("Step {}: Computed gradients = {:?}", step, gradients);
 
-            // Log gradients for debugging (optional)
-            println!("Step {}: Computed gradients = {:?}", step, gradients);
-
-            // Update weights
-
-            // Periodically log weight updates (optional)
-            println!(
-                "Step {}: Weights updated with learning rate = {:.6}",
-                step, learning_rate
-            );
+                // Periodically log weight updates (optional)
+                println!(
+                    "Step {}: Weights updated with learning rate = {:.6}",
+                    step, learning_rate
+                );
+            }
         }
 
         // End of epoch: Print average loss and track improvement
@@ -125,7 +136,7 @@ pub fn train() {
     );
 
     // Define the number of epochs and learning rate
-    let num_epochs = 10;
+    let num_epochs = 10000;
     let learning_rate = 0.001;
 
     // Train the model
@@ -167,7 +178,7 @@ pub fn training_model(
     let beta = Array2::zeros((1, EMBEDDING_SIZE));
 
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer = FeedForwardLayer::new(learnable_weights, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
 
     // Perform encoding with stacked layers
     let encoded = (0..NUM_LAYERS).fold(input_tensor.clone(), |acc, _| {
@@ -192,8 +203,10 @@ pub fn training_model(
         )
     });
 
+
+
     // Apply final linear transformation
-    let logits = flatten_3d_array(decoded).dot(&learnable_weights.output_projection.to_owned());
+    let logits = flatten_3d_array(apply_projection(&decoded, &learnable_weights.output_projection.to_owned()));
 
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
@@ -202,7 +215,23 @@ pub fn training_model(
     let tokens = predict_index(probabilities.view(), &vocab);
 
     // Optionally print logits for debugging
-    println!("Logits: {:?}", logits);
+    //println!("Logits: {:?}", logits);
 
     (tokens, logits)
+}
+fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
+    let repeat_count = input.len(); // The number of columns (same as the number of rows in the input)
+
+    // Create a 2D array where each row is filled with the corresponding index from the input
+    let data: Vec<Vec<f32>> = input
+        .iter()
+        .map(|&idx| vec![idx as f32; repeat_count])
+        .collect();
+
+    // Convert the Vec<Vec<usize>> into a 2D Array2
+    Array2::from_shape_vec(
+        (repeat_count, repeat_count),
+        data.into_iter().flatten().collect(),
+    )
+    .unwrap()
 }

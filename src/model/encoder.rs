@@ -3,7 +3,7 @@ use crate::attention::multihead_attention::multi_head_attention;
 use crate::data::learnable::initialize_weights;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
-use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
+use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE, NUM_HEADS};
 use contracts::{ensures, requires};
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
@@ -64,7 +64,7 @@ pub fn encoding(
         input.clone(),                  // Q
         input.clone(),                  // K
         input.clone(),                  // V
-        4,                              // Number of heads
+        NUM_HEADS,                              // Number of heads
         false,                          // No masking
         dummy_learned_matrices.clone(), // W_Q
         dummy_learned_matrices.clone(), // W_K

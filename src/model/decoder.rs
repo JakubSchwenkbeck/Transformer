@@ -7,6 +7,7 @@ use crate::model::encoder::encoding;
 use contracts::requires;
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
+use crate::settings::NUM_HEADS;
 
 #[requires(input.shape().len() == 3, "Input tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
 #[requires(encoder_output.shape().len() == 3, "Encoder output tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
@@ -36,7 +37,7 @@ pub fn decoding(
         input.clone(),                  // Q
         input.clone(),                  // K
         input.clone(),                  // V
-        4,                              // Number of heads
+        NUM_HEADS,                              // Number of heads
         true,                           // Masking enabled for decoder
         dummy_learned_matrices.clone(), // W_Q
         dummy_learned_matrices.clone(), // W_K
@@ -64,7 +65,7 @@ pub fn decoding(
         attention_norm.clone(),         // Q from the previous step
         encoder_output.clone(),         // K from the encoder output
         encoder_output.clone(),         // V from the encoder output
-        4,                              // Number of heads
+        NUM_HEADS,                              // Number of heads
         false,                          // No masking
         dummy_learned_matrices.clone(), // W_Q
         dummy_learned_matrices.clone(), // W_K
