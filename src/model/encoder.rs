@@ -3,7 +3,7 @@ use crate::attention::multihead_attention::multi_head_attention;
 use crate::data::learnable::initialize_weights;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
-use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE};
+use crate::settings::{BATCH_SIZE, EMBEDDING_SIZE, NUM_HEADS};
 use contracts::{ensures, requires};
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
@@ -59,17 +59,17 @@ pub fn encoding(
     assert!(seq_length > 0, "Sequence length must be greater than zero");
 
     // Multi-Head Attention
-    let dummy_learned_matrices = Array2::<f32>::ones((d_model, d_model)); // Replace with actual learned parameters
+    let weights = feed_forward_layer.learnables;
     let attention_output = multi_head_attention(
-        input.clone(),                  // Q
-        input.clone(),                  // K
-        input.clone(),                  // V
-        4,                              // Number of heads
-        false,                          // No masking
-        dummy_learned_matrices.clone(), // W_Q
-        dummy_learned_matrices.clone(), // W_K
-        dummy_learned_matrices.clone(), // W_V
-        dummy_learned_matrices.clone(), // W_O
+        input.clone(),                     // Q
+        input.clone(),                     // K
+        input.clone(),                     // V
+        NUM_HEADS,                         // Number of heads
+        false,                             // No masking
+        weights.query_weights.clone(),     // W_Q
+        weights.key_weights.clone(),       // W_K
+        weights.value_weights.clone(),     // W_V
+        weights.output_projection.clone(), // W_O
     );
 
     // Add & Normalize (Residual Connection + Layer Norm)

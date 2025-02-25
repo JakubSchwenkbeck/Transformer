@@ -1,12 +1,8 @@
-use Transformer::data::generation::example_gen;
-use Transformer::data::tokenizer::Tokenizer;
-use Transformer::example::example;
 use Transformer::model::train_transformer::train;
-use Transformer::model::transformer_model::transformer_model;
 fn main() {
     println!("runs successfully!");
     println!("============= ATTENTION WEIGHT EXAMPLE =============");
-    example();
+    // example();
 
     /*println!(" \n \n \n ENCODER/DECODER  \n");
 
@@ -67,14 +63,16 @@ fn main() {
     println!("Tokens: {:?}", tokens);
 
     */
-    let sentence = "hello rust world";
+    /*let sentence = "hello rust world";
     let input: Vec<String> = vec!["Hello rust world my name".parse().unwrap()];
     let tokenizer = Tokenizer::new(input);
     let predicted_token = transformer_model(sentence, tokenizer);
 
     println!("Predicted Token: {:?}", predicted_token);
 
-    example_gen();
+
+     */
+    //example_gen();
 
     train()
 }

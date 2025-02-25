@@ -114,8 +114,8 @@ pub fn predict_index(probabilities: ArrayView2<f32>, vocab: &HashMap<String, usi
             .enumerate()
             .filter(|(_, &prob)| !prob.is_nan()) // Filter out NaNs
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-            .unwrap()
-            .0;
+            .map(|(index, _)| index) // Get the index from the result
+            .unwrap_or(1); // Default to 0 if no valid index is found
 
         predicted_tokens.push(max_index);
     }
