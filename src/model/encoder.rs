@@ -61,14 +61,14 @@ pub fn encoding(
     // Multi-Head Attention
     let weights = feed_forward_layer.learnables;
     let attention_output = multi_head_attention(
-        input.clone(),                  // Q
-        input.clone(),                  // K
-        input.clone(),                  // V
-        NUM_HEADS,                              // Number of heads
-        false,                          // No masking
-        weights.query_weights.clone(),  // W_Q
-        weights.key_weights.clone(),    // W_K
-        weights.value_weights.clone(),  // W_V
+        input.clone(),                     // Q
+        input.clone(),                     // K
+        input.clone(),                     // V
+        NUM_HEADS,                         // Number of heads
+        false,                             // No masking
+        weights.query_weights.clone(),     // W_Q
+        weights.key_weights.clone(),       // W_K
+        weights.value_weights.clone(),     // W_V
         weights.output_projection.clone(), // W_O
     );
 

@@ -93,8 +93,7 @@ fn train_model(
 
             let _transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
-            let gradients =
-                compute_gradients(&mut learnable_weights, &inputs, &targets, &prob);
+            let gradients = compute_gradients(&mut learnable_weights, &inputs, &targets, &prob);
 
             // println!("GRADIENTS: {:?}", gradients);
             // Update weights
@@ -209,7 +208,10 @@ pub fn training_model(
     });
 
     // Apply final linear transformation
-    let logits = flatten_3d_array(apply_projection(&decoded, &learnable_weights.output_projection.to_owned()));
+    let logits = flatten_3d_array(apply_projection(
+        &decoded,
+        &learnable_weights.output_projection.to_owned(),
+    ));
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
 
@@ -236,7 +238,7 @@ fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
         (repeat_count, repeat_count),
         data.into_iter().flatten().collect(),
     )
-        .unwrap()
+    .unwrap()
 }
 
 fn training_ex(w: &mut LearnableWeights) {
@@ -245,7 +247,13 @@ fn training_ex(w: &mut LearnableWeights) {
 
     let tokens = tok.tokenize("Once");
     let target = tok.tokenize("Once upon");
-    let (out, _, _) = training_model(&tokens, <Array1<usize>>::from(target.clone()), w, vocab_size, tok.vocab);
+    let (out, _, _) = training_model(
+        &tokens,
+        <Array1<usize>>::from(target.clone()),
+        w,
+        vocab_size,
+        tok.vocab,
+    );
 
     println!("Expected Output: {:?} \n Model Output: {:?}", target, out);
 }

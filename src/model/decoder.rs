@@ -4,10 +4,10 @@ use crate::data::learnable::initialize_weights;
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::layers::normalization::layer_norm;
 use crate::model::encoder::encoding;
+use crate::settings::NUM_HEADS;
 use contracts::requires;
 use ndarray::{array, Array2, Array3};
 use std::ops::Add;
-use crate::settings::NUM_HEADS;
 
 #[requires(input.shape().len() == 3, "Input tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
 #[requires(encoder_output.shape().len() == 3, "Encoder output tensor must have 3 dimensions (batch_size, seq_length, d_model)")]
@@ -33,14 +33,14 @@ pub fn decoding(
     let weights = feed_forward_layer.learnables;
     // Self-Attention (Masked Multi-Head Attention in the Decoder)
     let attention_output = multi_head_attention(
-        input.clone(),                  // Q
-        input.clone(),                  // K
-        input.clone(),                  // V
-        NUM_HEADS,                              // Number of heads
-        true,                           // Masking enabled for decoder
-        weights.query_weights.clone(),  // W_Q
-        weights.key_weights.clone(),    // W_K
-        weights.value_weights.clone(),  // W_V
+        input.clone(),                     // Q
+        input.clone(),                     // K
+        input.clone(),                     // V
+        NUM_HEADS,                         // Number of heads
+        true,                              // Masking enabled for decoder
+        weights.query_weights.clone(),     // W_Q
+        weights.key_weights.clone(),       // W_K
+        weights.value_weights.clone(),     // W_V
         weights.output_projection.clone(), // W_O
     );
 
@@ -61,14 +61,14 @@ pub fn decoding(
 
     //  Encoder-Decoder Attention (Cross-Attention Layer)
     let cross_attention_output = multi_head_attention(
-        attention_norm.clone(),         // Q from the previous step
-        encoder_output.clone(),         // K from the encoder output
-        encoder_output.clone(),         // V from the encoder output
-        NUM_HEADS,                              // Number of heads
-        false,                          // No masking
-        weights.query_weights.clone(),  // W_Q
-        weights.key_weights.clone(),    // W_K
-        weights.value_weights.clone(),  // W_V
+        attention_norm.clone(),            // Q from the previous step
+        encoder_output.clone(),            // K from the encoder output
+        encoder_output.clone(),            // V from the encoder output
+        NUM_HEADS,                         // Number of heads
+        false,                             // No masking
+        weights.query_weights.clone(),     // W_Q
+        weights.key_weights.clone(),       // W_K
+        weights.value_weights.clone(),     // W_V
         weights.output_projection.clone(), // W_O
     );
 

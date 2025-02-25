@@ -1,9 +1,8 @@
-
 use Transformer::model::train_transformer::train;
 fn main() {
     println!("runs successfully!");
     println!("============= ATTENTION WEIGHT EXAMPLE =============");
-   // example();
+    // example();
 
     /*println!(" \n \n \n ENCODER/DECODER  \n");
 
