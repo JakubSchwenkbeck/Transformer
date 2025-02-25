@@ -14,6 +14,7 @@ pub struct FeedForwardLayer<'a> {
     pub(crate) input_size: usize, // Input feature size
     pub(crate) output_size: usize, // Output feature size
     initialized: bool,
+    pub learnables:  &'a LearnableWeights,
 }
 
 impl<'a> FeedForwardLayer<'a> {
@@ -33,6 +34,7 @@ impl<'a> FeedForwardLayer<'a> {
             input_size: learnable_weights.linear1_weights.shape()[0],
             output_size: learnable_weights.linear2_weights.shape()[1],
             initialized: true,
+            learnables: learnable_weights,
         }
     }
 

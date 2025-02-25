@@ -1,7 +1,7 @@
 use crate::attention::softmax::softmax_matrix;
 use crate::data::dataset::{gen_data, Dataset};
 use crate::data::learnable::LearnableWeights;
-use crate::data::tokenizer::Tokenizer;
+use crate::data::tokenizer::{tokenize_sentence, Tokenizer};
 use crate::layers::feedforward_layer::FeedForwardLayer;
 use crate::math::linear_algebra::{apply_projection, flatten_3d_array};
 use crate::model::decoder::decoding;
@@ -23,7 +23,7 @@ fn train_model(
 ) -> Vec<String> {
     let vocab_size = tokenizer.vocab.len(); // Vocabulary size
     let mut outputs = Vec::new(); // To store outputs for progress tracking
-
+    let mut loss_history: Vec<f32> = Vec::new();
     // Loop over the number of epochs
     for epoch in 0..num_epochs {
         println!("\n=== Epoch {}/{} ===", epoch + 1, num_epochs);
@@ -45,7 +45,7 @@ fn train_model(
             let target_seq = Array1::from(target.clone());
 
             // Forward pass: Model prediction
-            let (out, logits) = training_model(
+            let (out, logits, prob) = training_model(
                 input,
                 target_seq.clone(),
                 &mut learnable_weights,
@@ -58,7 +58,7 @@ fn train_model(
             total_loss += loss; // Accumulate loss for averaging
             num_batches += 1;
 
-            // Log loss and progress every 10 steps
+            // Log loss and progress every 100 steps
             if epoch % 100 == 0 {
                 let decoded_output = tokenizer.detokenize(out.to_vec());
                 let expected_output = tokenizer.detokenize(target.to_vec());
@@ -91,11 +91,12 @@ fn train_model(
                     target_seq[seq] as f32 // Correctly use target_seq here
                 });
 
-            let transformed: Array2<f32> = repeat_indices_as_array2(out);
+            let _transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
             let gradients =
-                compute_gradients(&mut learnable_weights, &inputs, &targets, &transformed);
+                compute_gradients(&mut learnable_weights, &inputs, &targets, &prob);
 
+            // println!("GRADIENTS: {:?}", gradients);
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
             if epoch % 100 == 0 {
@@ -112,6 +113,8 @@ fn train_model(
 
         // End of epoch: Print average loss and track improvement
         let avg_loss = total_loss / num_batches as f32;
+        loss_history.push(avg_loss);
+
         println!(
             "Epoch {} completed with average loss: {:.4}",
             epoch + 1,
@@ -120,6 +123,8 @@ fn train_model(
     }
 
     println!("\nTraining completed!");
+    //plot_loss_progression(loss_history);
+    training_ex(&mut learnable_weights);
     outputs
 }
 
@@ -137,7 +142,7 @@ pub fn train() {
 
     // Define the number of epochs and learning rate
     let num_epochs = 10000;
-    let learning_rate = 0.001;
+    let learning_rate = 0.00001;
 
     // Train the model
     let outputs = train_model(
@@ -160,7 +165,7 @@ pub fn training_model(
     learnable_weights: &mut LearnableWeights, // Learnable weights
     vocab_size: usize,                        // Vocabulary size
     vocab: HashMap<String, usize>,            // Vocabulary map
-) -> (Vec<usize>, Array2<f32>) {
+) -> (Vec<usize>, Array2<f32>, Array2<f32>) {
     // Initialize Tokenizer and Embedding layer
     let embedding = Embedding::new(vocab_size, EMBEDDING_SIZE);
 
@@ -178,7 +183,7 @@ pub fn training_model(
     let beta = Array2::zeros((1, EMBEDDING_SIZE));
 
     // Initialize the feed-forward layer with correct types
-    let feed_forward_layer = FeedForwardLayer::new(&learnable_weights, DROPOUT_RATE);
+    let feed_forward_layer = FeedForwardLayer::new(learnable_weights, DROPOUT_RATE);
 
     // Perform encoding with stacked layers
     let encoded = (0..NUM_LAYERS).fold(input_tensor.clone(), |acc, _| {
@@ -203,11 +208,8 @@ pub fn training_model(
         )
     });
 
-
-
     // Apply final linear transformation
     let logits = flatten_3d_array(apply_projection(&decoded, &learnable_weights.output_projection.to_owned()));
-
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
 
@@ -217,8 +219,9 @@ pub fn training_model(
     // Optionally print logits for debugging
     //println!("Logits: {:?}", logits);
 
-    (tokens, logits)
+    (tokens, logits, probabilities)
 }
+
 fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
     let repeat_count = input.len(); // The number of columns (same as the number of rows in the input)
 
@@ -233,5 +236,16 @@ fn repeat_indices_as_array2(input: Vec<usize>) -> Array2<f32> {
         (repeat_count, repeat_count),
         data.into_iter().flatten().collect(),
     )
-    .unwrap()
+        .unwrap()
+}
+
+fn training_ex(w: &mut LearnableWeights) {
+    let vocab_size = 6;
+    let tok = Tokenizer::new(tokenize_sentence("Once upon"));
+
+    let tokens = tok.tokenize("Once");
+    let target = tok.tokenize("Once upon");
+    let (out, _, _) = training_model(&tokens, <Array1<usize>>::from(target.clone()), w, vocab_size, tok.vocab);
+
+    println!("Expected Output: {:?} \n Model Output: {:?}", target, out);
 }
