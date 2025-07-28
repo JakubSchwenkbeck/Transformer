@@ -8,7 +8,6 @@ use crate::model::decoder::decoding;
 use crate::model::embedding::{predict_index, Embedding};
 use crate::model::encoder::encoding;
 use crate::settings::*;
-use crate::training::loss_function::cross_entropy_loss;
 use crate::training::train::{compute_gradients, update_weights};
 use ndarray::{Array1, Array2, Array3};
 use rand::prelude::SliceRandom;
@@ -53,8 +52,18 @@ fn train_model(
                 tokenizer.vocab.clone(),
             );
 
-            // Compute loss
-            let loss = cross_entropy_loss(&logits, &target_seq, vocab_size);
+            // Now, targets should come from the actual target sequence (target_seq)
+            // Create one-hot encoded targets
+            let mut targets = Array2::zeros((target.len(), vocab_size));
+            for (seq_idx, &target_token_idx) in target_seq.iter().enumerate() {
+                if seq_idx < targets.shape()[0] && target_token_idx < targets.shape()[1] {
+                    targets[[seq_idx, target_token_idx]] = 1.0;
+                }
+            }
+
+            // Compute proper loss using one-hot targets and probabilities
+            let loss_diff = &prob - &targets;
+            let loss = loss_diff.mapv(|x| x * x).sum() / 2.0; // Mean squared error
             total_loss += loss; // Accumulate loss for averaging
             num_batches += 1;
 
@@ -80,16 +89,11 @@ fn train_model(
                 // Print the result
                 println!("Percentage of equal elements: {:.2}%", percentage);
             }
+            
             let inputs = Array3::from_shape_fn(
                 (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
                 |(_, seq, embed)| logits[[seq, embed]],
             );
-
-            // Now, targets should come from the actual target sequence (target_seq)
-            let targets =
-                Array2::from_shape_fn((target.len(), logits.shape()[1]), |(seq, _embed)| {
-                    target_seq[seq] as f32 // Correctly use target_seq here
-                });
 
             let _transformed: Array2<f32> = repeat_indices_as_array2(out);
             // Compute gradients
@@ -140,8 +144,8 @@ pub fn train() {
     );
 
     // Define the number of epochs and learning rate
-    let num_epochs = 10000;
-    let learning_rate = 0.00001;
+    let num_epochs = 10000; // Extended training for simple pattern learning
+    let learning_rate = 1.0; // Moderate learning rate for stable convergence
 
     // Train the model
     let outputs = train_model(
@@ -210,7 +214,7 @@ pub fn training_model(
     // Apply final linear transformation
     let logits = flatten_3d_array(apply_projection(
         &decoded,
-        &learnable_weights.output_projection.to_owned(),
+        &learnable_weights.output_projection_vocab.to_owned(), // Changed from output_projection to output_projection_vocab
     ));
     // Apply softmax to logits
     let probabilities = softmax_matrix(&logits);
@@ -218,8 +222,14 @@ pub fn training_model(
     // Convert probabilities back to text using the tokenizer
     let tokens = predict_index(probabilities.view(), &vocab);
 
-    // Optionally print logits for debugging
-    //println!("Logits: {:?}", logits);
+    // Debug: Print logits and probabilities for the first sequence position
+    println!("DEBUGGING - Logits shape: {:?}", logits.shape());
+    println!("DEBUGGING - Probabilities shape: {:?}", probabilities.shape());
+    if !logits.is_empty() && !probabilities.is_empty() {
+        println!("DEBUGGING - First position logits: {:?}", logits.slice(ndarray::s![0, ..]));
+        println!("DEBUGGING - First position probabilities: {:?}", probabilities.slice(ndarray::s![0, ..]));
+        println!("DEBUGGING - Predicted tokens: {:?}", tokens);
+    }
 
     (tokens, logits, probabilities)
 }

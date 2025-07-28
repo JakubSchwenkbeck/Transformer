@@ -20,15 +20,16 @@ pub fn compute_gradients(
     );
 
     // Compute the loss and its derivative
-
-    // println!("PRED : {:?}",predictions);
-    // println!("TARGET : {:?}",targets);
+    println!("DEBUGGING - Predictions shape: {:?}", predictions.shape());
+    println!("DEBUGGING - Targets shape: {:?}", targets.shape());
+    println!("DEBUGGING - First 3 predictions: {:?}", predictions.slice(ndarray::s![0..3.min(predictions.shape()[0]), ..]));
+    println!("DEBUGGING - First 3 targets: {:?}", targets.slice(ndarray::s![0..3.min(targets.shape()[0]), ..]));
 
     let loss = predictions - targets;
-    let d_loss = 0.0001 * &loss * 2.0 / (BATCH_SIZE as f32);
-    // Debugging: Print loss and its derivative
-
-    //  println!("Derivative of loss (d_loss): {:?}", d_loss);
+    let d_loss = 0.05 * &loss * 2.0 / (BATCH_SIZE as f32); // Reduced from 0.1 to 0.05 for stability
+    
+    println!("DEBUGGING - Loss magnitude: {:?}", loss.iter().map(|x| x.abs()).fold(0.0f32, |acc, x| acc.max(x)));
+    println!("DEBUGGING - d_loss magnitude: {:?}", d_loss.iter().map(|x| x.abs()).fold(0.0f32, |acc, x| acc.max(x)));
 
     // Compute gradients for the output projection weights
     gradients.output_projection_vocab = predictions.t().dot(&d_loss);
