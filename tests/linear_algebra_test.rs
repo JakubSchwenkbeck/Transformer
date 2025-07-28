@@ -17,7 +17,7 @@ fn test_matmul_valid_input() {
     // Assert: Check the result is Ok and matches the expected result
     match result {
         Ok(res) => assert_eq!(res, expected),
-        Err(e) => panic!("Matrix multiplication failed: {}", e),
+        Err(e) => panic!("Matrix multiplication failed: {e}"),
     }
 }
 

@@ -19,8 +19,7 @@ pub fn one_test_gelu() {
     // Assert that the result is within the tolerance of the expected value
     assert!(
         (result - 0.841192f32).abs() < epsilon,
-        "Test failed: result was {}",
-        result
+        "Test failed: result was {result}"
     );
 }
 
@@ -43,9 +42,7 @@ fn test_gelu_2x2() {
         for (res, exp) in r.iter().zip(expected_row.iter()) {
             assert!(
                 (res - exp).abs() < epsilon,
-                "Test failed: result was {}, expected {}",
-                res,
-                exp
+                "Test failed: result was {res}, expected {exp}"
             );
         }
     }

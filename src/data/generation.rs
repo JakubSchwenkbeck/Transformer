@@ -68,7 +68,7 @@ pub fn example_gen() {
 
     // Display the pairs
     for (input, target) in pairs.clone() {
-        println!("Input: {:?}\nTarget: {:?}\n", input, target);
+        println!("Input: {input:?}\nTarget: {target:?}\n");
     }
     for (input, target) in pairs {
         let staircase_pairs = generate_staircase_pairs(&input, &target);

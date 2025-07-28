@@ -105,7 +105,7 @@ impl<'a> FeedForwardLayer<'a> {
                     .to_owned()
             }
             Err(ref e) => {
-                eprintln!("Shape error: {}", e);
+                eprintln!("Shape error: {e}");
                 x // Fallback to the original input on failure
             }
         }

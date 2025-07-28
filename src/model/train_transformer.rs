@@ -75,19 +75,22 @@ fn train_model(
             if epoch % 20 == 0 {
                 let decoded_output = tokenizer.detokenize(out.to_vec());
                 let expected_output = tokenizer.detokenize(target.to_vec());
-                
+
                 let num_matches = out
                     .iter()
                     .zip(target.iter())
                     .filter(|(o, t)| o == t)
                     .count();
-                
+
                 let total_elements = out.len();
                 let accuracy = (num_matches as f32 / total_elements as f32) * 100.0;
-                
+
                 info!(
                     "Epoch {}, Step {}: Loss = {:.4}, Accuracy = {:.1}%",
-                    epoch + 1, step, loss, accuracy
+                    epoch + 1,
+                    step,
+                    loss,
+                    accuracy
                 );
                 info!(
                     "Output: {:?} | Expected: {:?}",
@@ -95,7 +98,7 @@ fn train_model(
                 );
                 outputs.push(decoded_output);
             }
-            
+
             let inputs = Array3::from_shape_fn(
                 (BATCH_SIZE, input.len(), EMBEDDING_SIZE),
                 |(_, seq, embed)| logits[[seq, embed]],
@@ -107,8 +110,11 @@ fn train_model(
 
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
-            
-            debug!("Step {}: Weights updated with learning rate = {:.6}", step, learning_rate);
+
+            debug!(
+                "Step {}: Weights updated with learning rate = {:.6}",
+                step, learning_rate
+            );
         }
 
         // End of epoch: Print average loss and track improvement
@@ -123,27 +129,31 @@ fn train_model(
     }
 
     println!("\nTraining completed!");
-    
+
     // Test the model with the training data to verify learning
-    test_model_performance(&dataset, &tokenizer, &learnable_weights);
-    
+    test_model_performance(dataset, tokenizer, &learnable_weights);
+
     //plot_loss_progression(loss_history);
     training_ex(&mut learnable_weights);
     outputs
 }
 
 /// Test the trained model's performance on the training data
-fn test_model_performance(dataset: &Dataset, tokenizer: &Tokenizer, learnable_weights: &LearnableWeights) {
+fn test_model_performance(
+    dataset: &Dataset,
+    tokenizer: &Tokenizer,
+    learnable_weights: &LearnableWeights,
+) {
     println!("\n=== Model Performance Test ===");
     let vocab_size = tokenizer.vocab.len();
     let mut total_accuracy = 0.0;
     let test_samples = dataset.inputs.len().min(5); // Test on first 5 samples or all if fewer
-    
+
     for i in 0..test_samples {
         let input = &dataset.inputs[i];
         let target = &dataset.targets[i];
         let target_seq = Array1::from(target.clone());
-        
+
         // Get model prediction (we need to clone learnable_weights to make it mutable)
         let mut weights_copy = learnable_weights.clone();
         let (predicted, _, _) = training_model(
@@ -153,31 +163,31 @@ fn test_model_performance(dataset: &Dataset, tokenizer: &Tokenizer, learnable_we
             vocab_size,
             tokenizer.vocab.clone(),
         );
-        
+
         let predicted_text = tokenizer.detokenize(predicted.clone());
         let expected_text = tokenizer.detokenize(target.clone());
-        
+
         let num_matches = predicted
             .iter()
             .zip(target.iter())
             .filter(|(p, t)| p == t)
             .count();
-        
+
         let accuracy = (num_matches as f32 / target.len() as f32) * 100.0;
         total_accuracy += accuracy;
-        
+
         println!(
             "Test {}: Accuracy = {:.1}% | Predicted: {:?} | Expected: {:?}",
-            i + 1, accuracy, predicted_text, expected_text
+            i + 1,
+            accuracy,
+            predicted_text,
+            expected_text
         );
     }
-    
+
     let avg_accuracy = total_accuracy / test_samples as f32;
-    println!(
-        "\nOverall Test Accuracy: {:.1}%", 
-        avg_accuracy
-    );
-    
+    println!("\nOverall Test Accuracy: {avg_accuracy:.1}%");
+
     if avg_accuracy > 80.0 {
         println!("✅ Model learned successfully! (Accuracy > 80%)");
     } else if avg_accuracy > 50.0 {
@@ -214,7 +224,7 @@ pub fn train() {
 
     // Print some of the outputs after training
     for output in outputs.iter().take(5) {
-        println!("Output: {}", output);
+        println!("Output: {output}");
     }
 }
 
@@ -280,11 +290,20 @@ pub fn training_model(
 
     // Debug: Print logits and probabilities for the first sequence position
     println!("DEBUGGING - Logits shape: {:?}", logits.shape());
-    println!("DEBUGGING - Probabilities shape: {:?}", probabilities.shape());
+    println!(
+        "DEBUGGING - Probabilities shape: {:?}",
+        probabilities.shape()
+    );
     if !logits.is_empty() && !probabilities.is_empty() {
-        println!("DEBUGGING - First position logits: {:?}", logits.slice(ndarray::s![0, ..]));
-        println!("DEBUGGING - First position probabilities: {:?}", probabilities.slice(ndarray::s![0, ..]));
-        println!("DEBUGGING - Predicted tokens: {:?}", tokens);
+        println!(
+            "DEBUGGING - First position logits: {:?}",
+            logits.slice(ndarray::s![0, ..])
+        );
+        println!(
+            "DEBUGGING - First position probabilities: {:?}",
+            probabilities.slice(ndarray::s![0, ..])
+        );
+        println!("DEBUGGING - Predicted tokens: {tokens:?}");
     }
 
     (tokens, logits, probabilities)
@@ -321,5 +340,5 @@ fn training_ex(w: &mut LearnableWeights) {
         tok.vocab,
     );
 
-    println!("Expected Output: {:?} \n Model Output: {:?}", target, out);
+    println!("Expected Output: {target:?} \n Model Output: {out:?}");
 }

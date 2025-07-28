@@ -12,8 +12,7 @@ pub fn cross_entropy_loss(logits: &Array2<f32>, targets: &Array1<usize>, vocab_s
         // Ensure target index is within valid range
         if target >= vocab_size {
             panic!(
-                "Target index {} is out of bounds for vocab_size {}",
-                target, vocab_size
+                "Target index {target} is out of bounds for vocab_size {vocab_size}"
             );
         }
 

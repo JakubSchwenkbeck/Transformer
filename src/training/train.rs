@@ -22,7 +22,7 @@ pub fn compute_gradients(
     // Compute the loss and its derivative
     let loss = predictions - targets;
     let d_loss = 0.05 * &loss * 2.0 / (BATCH_SIZE as f32); // Reduced from 0.1 to 0.05 for stability
-    
+
     // Compute gradients for the output projection weights
     gradients.output_projection_vocab = predictions.t().dot(&d_loss);
 

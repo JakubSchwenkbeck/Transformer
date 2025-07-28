@@ -23,7 +23,7 @@ fn display_attention_weights(scores: Array2<f32>, words: &[&str]) {
     // Print column headers
     print!("{:<6}", ""); // Empty corner for alignment
     for word in words {
-        print!(" {:<5}", word);
+        print!(" {word:<5}");
     }
     println!(); // New line for clarity
 
@@ -31,7 +31,7 @@ fn display_attention_weights(scores: Array2<f32>, words: &[&str]) {
     for (i, row) in scores.outer_iter().enumerate() {
         print!("{:<6}", words[i]); // Row label
         for &val in row.iter() {
-            print!("{:<6.3}", val); // Print score with 3 decimal places
+            print!("{val:<6.3}"); // Print score with 3 decimal places
         }
         println!(); // New line after each row
     }
