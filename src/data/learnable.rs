@@ -1,6 +1,6 @@
 use crate::settings::*;
 use ndarray::{Array1, Array2};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LearnableWeights {
     // Embedding Layer
     pub embedding: Array2<f32>, // (vocab_size, embedding_dim)

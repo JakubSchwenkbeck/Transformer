@@ -1,7 +1,13 @@
 use Transformer::model::train_transformer::train;
+
 fn main() {
+    // Initialize tracing subscriber for structured logging
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+        
     println!("runs successfully!");
-    println!("============= ATTENTION WEIGHT EXAMPLE =============");
+    println!("============= TRAINING TRANSFORMER =============");
     // example();
 
     /*println!(" \n \n \n ENCODER/DECODER  \n");

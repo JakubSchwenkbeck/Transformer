@@ -12,6 +12,7 @@ use crate::training::train::{compute_gradients, update_weights};
 use ndarray::{Array1, Array2, Array3};
 use rand::prelude::SliceRandom;
 use std::collections::HashMap;
+use tracing::{debug, info};
 
 fn train_model(
     dataset: &Dataset,                       // The training data
@@ -67,27 +68,32 @@ fn train_model(
             total_loss += loss; // Accumulate loss for averaging
             num_batches += 1;
 
-            // Log loss and progress every 100 steps
-            if epoch % 100 == 0 {
+            debug!("Step {}: Loss = {:.4}", step, loss);
+            debug!("Target sequence: {:?}", target_seq);
+
+            // Log loss and progress every 20 epochs for reasonable output
+            if epoch % 20 == 0 {
                 let decoded_output = tokenizer.detokenize(out.to_vec());
                 let expected_output = tokenizer.detokenize(target.to_vec());
-                println!(
-                    "Step {}: Loss = {:.4}, Output = {:?}, Expected = {:?}",
-                    step, loss, decoded_output, expected_output
-                );
-                outputs.push(decoded_output);
+                
                 let num_matches = out
                     .iter()
-                    .zip(target.iter()) // Pair elements of out and target
-                    .filter(|(o, t)| o == t) // Keep only the pairs where the elements are equal
-                    .count(); // Count the number of matches
-
-                // Calculate the percentage of matching elements
+                    .zip(target.iter())
+                    .filter(|(o, t)| o == t)
+                    .count();
+                
                 let total_elements = out.len();
-                let percentage = (num_matches as f32 / total_elements as f32) * 100.0;
-
-                // Print the result
-                println!("Percentage of equal elements: {:.2}%", percentage);
+                let accuracy = (num_matches as f32 / total_elements as f32) * 100.0;
+                
+                info!(
+                    "Epoch {}, Step {}: Loss = {:.4}, Accuracy = {:.1}%",
+                    epoch + 1, step, loss, accuracy
+                );
+                info!(
+                    "Output: {:?} | Expected: {:?}",
+                    decoded_output, expected_output
+                );
+                outputs.push(decoded_output);
             }
             
             let inputs = Array3::from_shape_fn(
@@ -99,19 +105,10 @@ fn train_model(
             // Compute gradients
             let gradients = compute_gradients(&mut learnable_weights, &inputs, &targets, &prob);
 
-            // println!("GRADIENTS: {:?}", gradients);
             // Update weights
             update_weights(&mut learnable_weights, &gradients, learning_rate);
-            if epoch % 100 == 0 {
-                // Log gradients for debugging (optional)
-                println!("Step {}: Computed gradients = {:?}", step, gradients);
-
-                // Periodically log weight updates (optional)
-                println!(
-                    "Step {}: Weights updated with learning rate = {:.6}",
-                    step, learning_rate
-                );
-            }
+            
+            debug!("Step {}: Weights updated with learning rate = {:.6}", step, learning_rate);
         }
 
         // End of epoch: Print average loss and track improvement
@@ -126,9 +123,68 @@ fn train_model(
     }
 
     println!("\nTraining completed!");
+    
+    // Test the model with the training data to verify learning
+    test_model_performance(&dataset, &tokenizer, &learnable_weights);
+    
     //plot_loss_progression(loss_history);
     training_ex(&mut learnable_weights);
     outputs
+}
+
+/// Test the trained model's performance on the training data
+fn test_model_performance(dataset: &Dataset, tokenizer: &Tokenizer, learnable_weights: &LearnableWeights) {
+    println!("\n=== Model Performance Test ===");
+    let vocab_size = tokenizer.vocab.len();
+    let mut total_accuracy = 0.0;
+    let test_samples = dataset.inputs.len().min(5); // Test on first 5 samples or all if fewer
+    
+    for i in 0..test_samples {
+        let input = &dataset.inputs[i];
+        let target = &dataset.targets[i];
+        let target_seq = Array1::from(target.clone());
+        
+        // Get model prediction (we need to clone learnable_weights to make it mutable)
+        let mut weights_copy = learnable_weights.clone();
+        let (predicted, _, _) = training_model(
+            input,
+            target_seq.clone(),
+            &mut weights_copy,
+            vocab_size,
+            tokenizer.vocab.clone(),
+        );
+        
+        let predicted_text = tokenizer.detokenize(predicted.clone());
+        let expected_text = tokenizer.detokenize(target.clone());
+        
+        let num_matches = predicted
+            .iter()
+            .zip(target.iter())
+            .filter(|(p, t)| p == t)
+            .count();
+        
+        let accuracy = (num_matches as f32 / target.len() as f32) * 100.0;
+        total_accuracy += accuracy;
+        
+        println!(
+            "Test {}: Accuracy = {:.1}% | Predicted: {:?} | Expected: {:?}",
+            i + 1, accuracy, predicted_text, expected_text
+        );
+    }
+    
+    let avg_accuracy = total_accuracy / test_samples as f32;
+    println!(
+        "\nOverall Test Accuracy: {:.1}%", 
+        avg_accuracy
+    );
+    
+    if avg_accuracy > 80.0 {
+        println!("✅ Model learned successfully! (Accuracy > 80%)");
+    } else if avg_accuracy > 50.0 {
+        println!("⚠️  Model learned partially (Accuracy 50-80%)");
+    } else {
+        println!("❌ Model failed to learn effectively (Accuracy < 50%)");
+    }
 }
 
 pub fn train() {
@@ -144,7 +200,7 @@ pub fn train() {
     );
 
     // Define the number of epochs and learning rate
-    let num_epochs = 10000; // Extended training for simple pattern learning
+    let num_epochs = 100; // Reduced epochs for faster training
     let learning_rate = 1.0; // Moderate learning rate for stable convergence
 
     // Train the model

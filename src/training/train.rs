@@ -20,28 +20,14 @@ pub fn compute_gradients(
     );
 
     // Compute the loss and its derivative
-    println!("DEBUGGING - Predictions shape: {:?}", predictions.shape());
-    println!("DEBUGGING - Targets shape: {:?}", targets.shape());
-    println!("DEBUGGING - First 3 predictions: {:?}", predictions.slice(ndarray::s![0..3.min(predictions.shape()[0]), ..]));
-    println!("DEBUGGING - First 3 targets: {:?}", targets.slice(ndarray::s![0..3.min(targets.shape()[0]), ..]));
-
     let loss = predictions - targets;
     let d_loss = 0.05 * &loss * 2.0 / (BATCH_SIZE as f32); // Reduced from 0.1 to 0.05 for stability
     
-    println!("DEBUGGING - Loss magnitude: {:?}", loss.iter().map(|x| x.abs()).fold(0.0f32, |acc, x| acc.max(x)));
-    println!("DEBUGGING - d_loss magnitude: {:?}", d_loss.iter().map(|x| x.abs()).fold(0.0f32, |acc, x| acc.max(x)));
-
     // Compute gradients for the output projection weights
     gradients.output_projection_vocab = predictions.t().dot(&d_loss);
 
-    // Debugging: Print the output projection gradient
-    //  println!("Gradient for output_projection_vocab: {:?}", gradients.output_projection_vocab);
-
     // Flattened inputs for further computations
     let flattened_inputs = flatten_3d_array(inputs.clone()); // Flatten [1, 88, 88] -> [88, 88]
-
-    // Debugging: Print flattened inputs
-    // println!("Flattened inputs: {:?}", flattened_inputs);
 
     // Compute gradients for the feedforward network weights
     // d_linear2 corresponds to the gradient w.r.t. the second linear layer
